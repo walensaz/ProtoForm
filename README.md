@@ -143,5 +143,5 @@ sbt "demoServer/run"                              # Start local gRPC sandbox ser
 ProtoForm is free and open-source software licensed under the **GNU General Public License v3.0 (GPL-3.0)** — see [LICENSE](LICENSE).
 
 - **Open Source Guarantee**: Anyone is free to use, study, modify, and redistribute ProtoForm, provided any distributed modifications or derivative works remain open source under GPL-3.0.
-- **Private / Commercial Licensing**: If you wish to embed, rebrand, or distribute ProtoForm in a closed-source or proprietary product without GPL-3.0 source-disclosure obligations, contact **zwalensa@gmail.com** to arrange a private commercial license.
+- **Private / Commercial Licensing**: If you wish to embed, rebrand, or distribute ProtoForm in a closed-source or proprietary product without GPL-3.0 source-disclosure obligations, open a [GitHub issue](https://github.com/walensaz/ProtoForm/issues) or reach out via [GitHub](https://github.com/walensaz) to arrange a private commercial license.
 - **Donations**: ProtoForm is built to stay free for the community. If it saves you time, donations and sponsorships are always welcome!
