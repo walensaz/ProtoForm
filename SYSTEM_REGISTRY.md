@@ -128,7 +128,7 @@ This registry tracks the component inventory, source file paths, architectural r
 | `MetadataEditor` | `ui/views/MetadataEditor.scala` | Auth Profile selector, Auth Preset inputs, custom headers with `.row-delete-btn`, and session auth persistence. |
 | `ResponsePane` | `ui/views/ResponsePane.scala` | Symmetric `48px` `.pane-header-bar` with short status/latency/size pills, uniform `29×29px` centered icon controls (`Copy`, `Pop Out`, `•••` for `Pin`/`Diff`/`Clear Stream`, or expanded inline buttons in Advanced mode), wrapping gRPC error summary banner, read-only `JsonCodeArea` with empty-state overlay, `HEADER`/`TRAILER` pill-badged copyable metadata table, and master-detail `Stream Log`. |
 | `TabDragSupport` | `ui/util/TabDragSupport.scala` | Drag-and-drop tab reordering within and across `RequestPane` ↔ `ResponsePane` with `.tab-drop-target` feedback. |
-| `WindowStateController`, `WindowResizeHelper`, `CustomDialogStage`, `DockingManager` | `ui/util/` | Dock/taskbar-aware maximize/bounds persistence, 8-direction resize, undecorated themed modal/confirmation (`showConfirm`) factory, and floating `ResponsePane` docking. |
+| `WindowStateController`, `WindowResizeHelper`, `CustomDialogStage`, `DockingManager` | `ui/util/` | Dock/taskbar-aware maximize/restore-on-drag, bounds persistence, 8-direction resize (`8px`/`5px`/`14px` hit zones, screen `minY` clamping, `4px`-threshold header drag), undecorated themed modal/confirmation (`showConfirm`) factory, and floating `ResponsePane` docking. |
 | `ThemeManager`, `AppState` | `ui/theme/ThemeManager.scala`, `ui/state/AppState.scala` | Bundled `IBM Plex Sans`/`JetBrains Mono`, multi-resolution app icons (`applyStageIcons`), swapped CSS stacks across scenes, and central reactive properties (including environments and pinned baseline). |
 
 ---
@@ -157,6 +157,7 @@ This registry tracks the component inventory, source file paths, architectural r
 | `NettyGrpcChannelAdapterSpec` | `infrastructure/NettyGrpcChannelAdapterSpec.scala` | Channel pooling/keying by `(uriString, overrideAuthority, tlsCertPath, insecureSkipTlsVerify, clientCertPath, clientKeyPath, maxInboundBytes)`, mTLS pair validation, reuse, and shutdown. |
 | `KubectlPortForwardAdapterSpec` | `infrastructure/KubectlPortForwardAdapterSpec.scala` | `kubectl` context/namespace/target JSON parsing and port-forward bound local port extraction. |
 | `DynamicAuthResolverSpec` | `infrastructure/DynamicAuthResolverSpec.scala` | `HS256`/`RS256` Signed JWT structure/signing and Google Cloud error handling. |
+| `WindowResizeHelperSpec` | `ui/util/WindowResizeHelperSpec.scala` | 8-direction edge/corner hit detection, anchor-preserving resize bounds, min-size clamping, and macOS menu-bar `minY` clamping. |
 
 ---
 

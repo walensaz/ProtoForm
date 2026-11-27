@@ -242,13 +242,18 @@ class ProtoFormApp extends Application {
     ThemeManager.registerScene(scene, primaryStage)
     installKeyboardShortcuts(scene)
 
-    WindowResizeHelper.install(primaryStage, () => windowController.isMaximized)
+    WindowResizeHelper.install(
+      primaryStage,
+      isMaximizedCheck = () => windowController.isMaximized,
+      onBeginResizeFromMaximized = () => windowController.detachMaximizedForResize()
+    )
 
     primaryStage.setTitle("ProtoForm — Dynamic gRPC Client")
     ThemeManager.applyStageIcons(primaryStage)
     primaryStage.setScene(scene)
-    primaryStage.setMinWidth(1000)
-    primaryStage.setMinHeight(640)
+    val primaryVb = javafx.stage.Screen.getPrimary.getVisualBounds
+    primaryStage.setMinWidth(Math.min(1000.0, primaryVb.getWidth))
+    primaryStage.setMinHeight(Math.min(640.0, primaryVb.getHeight))
     windowController.install()
 
     primaryStage.setOnCloseRequest { _ =>
@@ -974,7 +979,20 @@ class ProtoFormApp extends Application {
     val shortcutHint = new Label("Ctrl+Enter Send  ·  Ctrl+K Jump  ·  Ctrl+B Sidebar  ·  Ctrl+L Target  ·  Ctrl+, Settings")
     shortcutHint.getStyleClass.add("info-strip")
 
-    bar.getChildren.addAll(connectionBox, new Separator(Orientation.VERTICAL), spinner, statusLabel, spacer, shortcutHint)
+    val gripLines = new javafx.scene.shape.SVGPath()
+    gripLines.setContent("M 11 3 L 3 11 M 11 7 L 7 11")
+    gripLines.getStyleClass.add("window-resize-grip-icon")
+
+    val resizeGrip = new StackPane(gripLines)
+    resizeGrip.getStyleClass.add("window-resize-grip")
+    resizeGrip.setMinSize(14, 14)
+    resizeGrip.setPrefSize(14, 14)
+    resizeGrip.setMaxSize(14, 14)
+    resizeGrip.setMouseTransparent(true)
+    resizeGrip.visibleProperty().bind(windowController.isMaximizedProperty.not())
+    resizeGrip.managedProperty().bind(windowController.isMaximizedProperty.not())
+
+    bar.getChildren.addAll(connectionBox, new Separator(Orientation.VERTICAL), spinner, statusLabel, spacer, shortcutHint, resizeGrip)
     bar
   }
 }

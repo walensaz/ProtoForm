@@ -39,9 +39,6 @@ object CustomDialogStage {
     ThemeManager.getPrimaryWindow.foreach(stage.initOwner)
     stage.setTitle(title)
 
-    var dragOffsetX = 0.0
-    var dragOffsetY = 0.0
-
     val icon = FontIcon.of(iconCode, 14)
     icon.getStyleClass.add("brand-icon")
     val iconBox = new StackPane(icon)
@@ -65,14 +62,7 @@ object CustomDialogStage {
     headerExtraRight.foreach(headerBar.getChildren.add)
     headerBar.getChildren.add(closeBtn)
 
-    headerBar.setOnMousePressed { ev =>
-      dragOffsetX = ev.getScreenX - stage.getX
-      dragOffsetY = ev.getScreenY - stage.getY
-    }
-    headerBar.setOnMouseDragged { ev =>
-      stage.setX(ev.getScreenX - dragOffsetX)
-      stage.setY(ev.getScreenY - dragOffsetY)
-    }
+    WindowResizeHelper.installHeaderDrag(headerBar, stage)
 
     val topStack = new VBox(headerBar)
     subtitle.filter(_.trim.nonEmpty).foreach { sub =>

@@ -9,7 +9,7 @@ import javafx.stage.Stage
 import net.protoform.application.WorkspaceService
 import net.protoform.ui.state.AppState
 import net.protoform.ui.theme.ThemeManager
-import net.protoform.ui.util.WindowStateController
+import net.protoform.ui.util.{WindowResizeHelper, WindowStateController}
 import org.kordamp.ikonli.feather.Feather
 import org.kordamp.ikonli.javafx.FontIcon
 
@@ -42,9 +42,6 @@ class CustomTitleBar(
   actions: TitleBarActions,
   onCloseRequested: () => Unit
 ) extends HBox(8) {
-
-  private var dragOffsetX: Double = 0.0
-  private var dragOffsetY: Double = 0.0
 
   setAlignment(Pos.CENTER_LEFT)
   setPadding(new Insets(6, 10, 6, 10))
@@ -226,23 +223,16 @@ class CustomTitleBar(
   val dragSpacer = new Region()
   HBox.setHgrow(dragSpacer, Priority.ALWAYS)
 
-  setOnMousePressed { event =>
-    dragOffsetX = event.getScreenX - stage.getX
-    dragOffsetY = event.getScreenY - stage.getY
-  }
-
-  setOnMouseDragged { event =>
-    if (!windowController.isMaximized && !stage.isMaximized) {
-      stage.setX(event.getScreenX - dragOffsetX)
-      stage.setY(event.getScreenY - dragOffsetY)
-    }
-  }
-
-  setOnMouseClicked { event =>
-    if (event.getClickCount == 2 && (event.getTarget == this || event.getTarget == dragSpacer)) {
-      windowController.toggleMaximize()
-    }
-  }
+  WindowResizeHelper.installHeaderDrag(
+    header = this,
+    stage = stage,
+    isMaximized = () => windowController.isMaximized || stage.isMaximized,
+    onRestoreForDrag = (sx, sy) => {
+      if (stage.isMaximized) stage.setMaximized(false)
+      windowController.restoreForDrag(sx, sy)
+    },
+    onDoubleClick = Some(() => windowController.toggleMaximize())
+  )
 
   // --- Right Section: Quick Switcher, Response Toggle & Window Controls ---
   val quickSearchBtn = new Button("Jump", FontIcon.of(Feather.COMMAND, 12))

@@ -115,6 +115,45 @@ class WindowStateController(
     persistDebounce.playFromStart()
   }
 
+  def detachMaximizedForResize(): Unit = {
+    if (!isMaximized) return
+    applyingBounds = true
+    try {
+      captureCurrentRestoreBounds()
+      maximizedProp.set(false)
+    } finally {
+      applyingBounds = false
+    }
+    persistDebounce.playFromStart()
+  }
+
+  def restoreForDrag(pointerScreenX: Double, pointerScreenY: Double): (Double, Double) = {
+    val vb = resolveActiveScreenVisualBounds()
+    val (_, _, targetW, targetH) = clampToVisibleScreen(restoreX, restoreY, restoreWidth, restoreHeight)
+    val ratioX = if (vb.getWidth > 0) Math.max(0.0, Math.min(1.0, (pointerScreenX - vb.getMinX) / vb.getWidth)) else 0.5
+    val anchorOffsetX = Math.max(24.0, Math.min(targetW - 24.0, ratioX * targetW))
+    val newX = Math.max(vb.getMinX, Math.min(pointerScreenX - anchorOffsetX, vb.getMaxX - targetW))
+    val anchorOffsetY = Math.max(8.0, Math.min(38.0, pointerScreenY - vb.getMinY))
+    val newY = Math.max(vb.getMinY, pointerScreenY - anchorOffsetY)
+
+    applyingBounds = true
+    try {
+      maximizedProp.set(false)
+      restoreX = Some(newX)
+      restoreY = Some(newY)
+      restoreWidth = targetW
+      restoreHeight = targetH
+      stage.setWidth(targetW)
+      stage.setHeight(targetH)
+      stage.setX(newX)
+      stage.setY(newY)
+    } finally {
+      applyingBounds = false
+    }
+    persistDebounce.playFromStart()
+    (pointerScreenX - newX, pointerScreenY - newY)
+  }
+
   def currentSnapshot: WindowBounds = {
     if (!isMaximized && !stage.isIconified) {
       captureCurrentRestoreBounds()
