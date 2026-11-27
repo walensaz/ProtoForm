@@ -20,8 +20,12 @@ jobs:
     outputs:
       version: ${{ steps.ver.outputs.version }}
       tag: ${{ steps.ver.outputs.tag }}
+      release_id: ${{ steps.ver.outputs.release_id }}
     steps:
       - id: ver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             TAG="${GITHUB_REF_NAME}"
@@ -30,8 +34,28 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             TAG="v${VERSION#v}"
           fi
+
+          # Remove any stale release/draft for this tag (e.g. after force-pushing a tag)
+          for old_id in $(gh api --paginate "repos/${GH_REPO}/releases" --jq ".[] | select(.tag_name == \"${TAG}\") | .id"); do
+            gh api -X DELETE "repos/${GH_REPO}/releases/${old_id}"
+          done
+
+          RELEASE_ID="$(gh api -X POST "repos/${GH_REPO}/releases" \
+            -f tag_name="${TAG}" \
+            -f target_commitish="${{ github.sha }}" \
+            -f name="ProtoForm ${TAG}" \
+            -F draft=true \
+            -F generate_release_notes=true \
+            --jq '.id')"
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Failed to create draft release for ${TAG}" >&2
+            exit 1
+          fi
+
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_id=${RELEASE_ID}" >> "$GITHUB_OUTPUT"
 
   build-windows:
     needs: prepare-release
@@ -54,20 +78,34 @@ jobs:
         shell: pwsh
         run: |
           .\packaging\package-windows.ps1 -InstallerType all -Version "${{ needs.prepare-release.outputs.version }}"
-      - name: Verify Windows release assets
-        shell: pwsh
+      - name: Upload Windows assets directly to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.prepare-release.outputs.release_id }}
         run: |
-          $files = Get-ChildItem dist -File | Where-Object { $_.Extension -in @('.zip', '.msi', '.exe') }
-          if (-not $files) { throw "No Windows release assets found in dist/" }
-      - name: Upload Windows workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-windows
-          path: |
-            dist/*.zip
-            dist/*.msi
-            dist/*.exe
-          if-no-files-found: error
+          shopt -s nullglob
+          files=(dist/*.zip dist/*.msi dist/*.exe)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Windows release assets found in dist/" >&2
+            exit 1
+          fi
+          existing_assets="$(gh api --paginate "repos/${GH_REPO}/releases/${RELEASE_ID}/assets" --jq '.[] | "\(.id)\t\(.name)"' || true)"
+          for f in "${files[@]}"; do
+            fname="$(basename "$f")"
+            while IFS=$'\t' read -r aid aname; do
+              if [ -n "$aid" ] && [ "$aname" = "$fname" ]; then
+                gh api -X DELETE "repos/${GH_REPO}/releases/assets/${aid}"
+              fi
+            done <<< "$existing_assets"
+            curl -fsSL -X POST \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@${f}" \
+              "https://uploads.github.com/repos/${GH_REPO}/releases/${RELEASE_ID}/assets?name=${fname}" >/dev/null
+          done
 
   build-macos:
     needs: prepare-release
@@ -88,7 +126,11 @@ jobs:
         run: |
           chmod +x packaging/package-unix.sh
           ./packaging/package-unix.sh "${{ needs.prepare-release.outputs.version }}"
-      - name: Verify macOS release assets
+      - name: Upload macOS assets directly to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.prepare-release.outputs.release_id }}
         run: |
           shopt -s nullglob
           files=(dist/*.dmg dist/*.zip)
@@ -96,14 +138,21 @@ jobs:
             echo "No macOS release assets found in dist/" >&2
             exit 1
           fi
-      - name: Upload macOS workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-macos-${{ matrix.runner }}
-          path: |
-            dist/*.dmg
-            dist/*.zip
-          if-no-files-found: error
+          existing_assets="$(gh api --paginate "repos/${GH_REPO}/releases/${RELEASE_ID}/assets" --jq '.[] | "\(.id)\t\(.name)"' || true)"
+          for f in "${files[@]}"; do
+            fname="$(basename "$f")"
+            while IFS=$'\t' read -r aid aname; do
+              if [ -n "$aid" ] && [ "$aname" = "$fname" ]; then
+                gh api -X DELETE "repos/${GH_REPO}/releases/assets/${aid}"
+              fi
+            done <<< "$existing_assets"
+            curl -fsSL -X POST \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@${f}" \
+              "https://uploads.github.com/repos/${GH_REPO}/releases/${RELEASE_ID}/assets?name=${fname}" >/dev/null
+          done
 
   build-linux:
     needs: prepare-release
@@ -125,7 +174,11 @@ jobs:
           ./packaging/package-unix.sh "${{ needs.prepare-release.outputs.version }}"
           sbt -Dprotoform.universal=true assembly
           cp target/scala-3.3.3/protoform-*.jar dist/
-      - name: Verify Linux release assets
+      - name: Upload Linux & universal JAR assets directly to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.prepare-release.outputs.release_id }}
         run: |
           shopt -s nullglob
           files=(dist/*.deb dist/*.zip dist/*.jar)
@@ -133,36 +186,55 @@ jobs:
             echo "No Linux release assets found in dist/" >&2
             exit 1
           fi
-      - name: Upload Linux workflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-linux
-          path: |
-            dist/*.deb
-            dist/*.zip
-            dist/*.jar
-          if-no-files-found: error
+          existing_assets="$(gh api --paginate "repos/${GH_REPO}/releases/${RELEASE_ID}/assets" --jq '.[] | "\(.id)\t\(.name)"' || true)"
+          for f in "${files[@]}"; do
+            fname="$(basename "$f")"
+            while IFS=$'\t' read -r aid aname; do
+              if [ -n "$aid" ] && [ "$aname" = "$fname" ]; then
+                gh api -X DELETE "repos/${GH_REPO}/releases/assets/${aid}"
+              fi
+            done <<< "$existing_assets"
+            curl -fsSL -X POST \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@${f}" \
+              "https://uploads.github.com/repos/${GH_REPO}/releases/${RELEASE_ID}/assets?name=${fname}" >/dev/null
+          done
 
   finalize-release:
     needs: [prepare-release, build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - name: Download all platform artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: release-*
-          path: release-assets
-          merge-multiple: true
-      - name: Generate SHA256SUMS.txt & publish GitHub Release
+      - name: Generate SHA256SUMS.txt & publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ needs.prepare-release.outputs.release_id }}
         run: |
-          TAG="${{ needs.prepare-release.outputs.tag }}"
-          rm -f release-assets/SHA256SUMS.txt
+          mkdir -p release-assets
+          while IFS=$'\t' read -r aid aname; do
+            [ -z "$aid" ] && continue
+            if [ "$aname" = "SHA256SUMS.txt" ]; then
+              gh api -X DELETE "repos/${GH_REPO}/releases/assets/${aid}"
+              continue
+            fi
+            curl -fsSL \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/octet-stream" \
+              "https://api.github.com/repos/${GH_REPO}/releases/assets/${aid}" \
+              -o "release-assets/${aname}"
+          done < <(gh api --paginate "repos/${GH_REPO}/releases/${RELEASE_ID}/assets" --jq '.[] | "\(.id)\t\(.name)"')
+
           (cd release-assets && sha256sum * > SHA256SUMS.txt)
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release delete "$TAG" --yes
-          fi
-          gh release create "$TAG" release-assets/* --title "ProtoForm ${TAG}" --generate-notes --latest
+
+          curl -fsSL -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary "@release-assets/SHA256SUMS.txt" \
+            "https://uploads.github.com/repos/${GH_REPO}/releases/${RELEASE_ID}/assets?name=SHA256SUMS.txt" >/dev/null
+
+          gh api -X PATCH "repos/${GH_REPO}/releases/${RELEASE_ID}" \
+            -F draft=false \
+            -f make_latest="true" >/dev/null
