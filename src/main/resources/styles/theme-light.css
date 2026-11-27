@@ -1,0 +1,74 @@
+/* ==========================================================================
+   Light Mode Token Overrides (Primer Light, Cupertino Light, ProtoForm Paper)
+   ========================================================================== */
+
+.root {
+    -pf-bg-canvas:       #e8ecf2;
+    -pf-bg-pane:         #f6f7f9;
+    -pf-bg-card:         #ffffff;
+    -pf-bg-input:        #ffffff;
+    -pf-bg-zebra:        rgba(15, 23, 42, 0.028);
+    -pf-bg-hover:        rgba(15, 23, 42, 0.055);
+    -pf-bg-selected:     -color-accent-subtle;
+
+    -pf-border-subtle:   #dce2ea;
+    -pf-border-default:  #c5cedb;
+    -pf-border-strong:   #8f9db2;
+
+    -pf-accent:          -color-accent-emphasis;
+    -pf-accent-hover:    derive(-color-accent-emphasis, -12%);
+    -pf-accent-text:     -color-accent-fg;
+    -pf-accent-ring:     -color-accent-muted;
+
+    -pf-success-bg:      rgba(16, 185, 129, 0.12);
+    -pf-success-border:  rgba(5, 150, 105, 0.35);
+    -pf-success-fg:      #047857;
+
+    -pf-warning-bg:      rgba(217, 119, 6, 0.12);
+    -pf-warning-border:  rgba(217, 119, 6, 0.35);
+    -pf-warning-fg:      #b45309;
+
+    -pf-danger-bg:       rgba(220, 38, 38, 0.10);
+    -pf-danger-border:   rgba(220, 38, 38, 0.35);
+    -pf-danger-fg:       #b91c1c;
+
+    /* High-contrast Protobuf Badges for Light Surfaces */
+    -pf-type-string-bg:     rgba(2, 132, 199, 0.10);
+    -pf-type-string-fg:     #0369a1;
+    -pf-type-string-bd:     rgba(2, 132, 199, 0.28);
+
+    -pf-type-numeric-bg:    rgba(217, 119, 6, 0.10);
+    -pf-type-numeric-fg:    #b45309;
+    -pf-type-numeric-bd:    rgba(217, 119, 6, 0.28);
+
+    -pf-type-bool-bg:       rgba(124, 58, 237, 0.10);
+    -pf-type-bool-fg:       #6d28d9;
+    -pf-type-bool-bd:       rgba(124, 58, 237, 0.28);
+
+    -pf-type-enum-bg:       rgba(13, 148, 136, 0.10);
+    -pf-type-enum-fg:       #0f766e;
+    -pf-type-enum-bd:       rgba(13, 148, 136, 0.28);
+
+    -pf-type-message-bg:    rgba(37, 99, 235, 0.10);
+    -pf-type-message-fg:    #1d4ed8;
+    -pf-type-message-bd:    rgba(37, 99, 235, 0.28);
+
+    -pf-type-repeated-bg:   rgba(225, 29, 72, 0.10);
+    -pf-type-repeated-fg:   #be123c;
+    -pf-type-repeated-bd:   rgba(225, 29, 72, 0.28);
+
+    -pf-type-map-bg:        rgba(192, 38, 211, 0.10);
+    -pf-type-map-fg:        #a21caf;
+    -pf-type-map-bd:        rgba(192, 38, 211, 0.28);
+
+    /* JSON Syntax Highlighting (Light) */
+    -pf-json-key:        #0f766e;
+    -pf-json-string:     #b45309;
+    -pf-json-number:     #1d4ed8;
+    -pf-json-bool:       #be123c;
+    -pf-json-null:       #64748b;
+    -pf-json-brace:      #475569;
+    -pf-json-selection:  rgba(15, 118, 110, 0.20);
+    -pf-gutter-bg:       #eef1f5;
+    -pf-gutter-fg:       #64748b;
+}

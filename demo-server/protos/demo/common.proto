@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package demo.common.v1;
+
+enum Priority {
+  PRIORITY_UNSPECIFIED = 0;
+  PRIORITY_LOW = 1;
+  PRIORITY_MEDIUM = 2;
+  PRIORITY_HIGH = 3;
+  PRIORITY_CRITICAL = 4;
+}
+
+message Money {
+  string currency = 1;
+  int64 units = 2;
+  int32 nanos = 3;
+}
+
+message ClientInfo {
+  string client_id = 1;
+  string version = 2;
+  bool dry_run = 3;
+}
+
+message HeaderEntry {
+  string key = 1;
+  string value = 2;
+}

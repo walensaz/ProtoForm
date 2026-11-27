@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Signature Theme: ProtoForm Carbon (Warm Graphite + Signal Teal)
+   ========================================================================== */
+
+.root {
+    -color-bg-default:     #101216;
+    -color-bg-subtle:      #171b22;
+    -color-bg-inset:       #0c0e12;
+    -color-border-subtle:  #272d38;
+    -color-border-default: #353e4e;
+    -color-fg-default:     #e6eaf0;
+    -color-fg-muted:       #8e98aa;
+    -color-accent-emphasis:#0f766e;
+    -color-accent-fg:      #2dd4bf;
+    -color-accent-subtle:  rgba(20, 184, 166, 0.16);
+    -color-accent-muted:   rgba(20, 184, 166, 0.38);
+
+    -pf-bg-canvas:       #101216;
+    -pf-bg-pane:         #171b22;
+    -pf-bg-card:         #1f2530;
+    -pf-bg-input:        #0c0e12;
+    -pf-bg-zebra:        rgba(255, 255, 255, 0.028);
+    -pf-bg-hover:        rgba(255, 255, 255, 0.055);
+    -pf-bg-selected:     rgba(20, 184, 166, 0.16);
+
+    -pf-border-subtle:   #272d38;
+    -pf-border-default:  #353e4e;
+    -pf-border-strong:   #536078;
+
+    -pf-accent:          #0f766e;
+    -pf-accent-hover:    #0d9488;
+    -pf-accent-text:     #2dd4bf;
+    -pf-accent-subtle:   rgba(20, 184, 166, 0.15);
+    -pf-accent-ring:     rgba(20, 184, 166, 0.38);
+
+    -pf-gutter-bg:       #12151a;
+    -pf-gutter-fg:       #5d677a;
+}

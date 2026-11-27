@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package demo.sandbox.v1;
+
+import "demo/common.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+service SandboxService {
+  rpc Echo(EchoRequest) returns (EchoResponse);
+  rpc SimulateBehavior(BehaviorRequest) returns (BehaviorResponse);
+  rpc StreamEvents(StreamEventsRequest) returns (stream ServerEvent);
+  rpc CollectMetrics(stream MetricPoint) returns (MetricSummary);
+  rpc InteractiveChat(stream ChatMessage) returns (stream ChatMessage);
+}
+
+message EchoRequest {
+  string message = 1;
+  int32 count = 2;
+  double score = 3;
+  bool active = 4;
+  bytes raw_payload = 5;
+  demo.common.v1.Priority priority = 6;
+  demo.common.v1.ClientInfo client = 7;
+  repeated string tags = 8;
+  map<string, string> attributes = 9;
+  google.protobuf.Timestamp requested_at = 10;
+  google.protobuf.Duration timeout_hint = 11;
+  google.protobuf.FieldMask update_mask = 12;
+
+  oneof detail {
+    string note = 13;
+    int64 code = 14;
+    google.protobuf.Struct extra = 15;
+  }
+}
+
+message EchoResponse {
+  string message = 1;
+  int32 count = 2;
+  double score = 3;
+  bool active = 4;
+  int32 raw_payload_bytes = 5;
+  demo.common.v1.Priority priority = 6;
+  demo.common.v1.ClientInfo client = 7;
+  repeated string tags = 8;
+  map<string, string> attributes = 9;
+  google.protobuf.Timestamp received_at = 10;
+  google.protobuf.Duration server_elapsed = 11;
+  repeated demo.common.v1.HeaderEntry received_headers = 12;
+  string detail_summary = 13;
+}
+
+enum GrpcStatusCode {
+  GRPC_STATUS_CODE_UNSPECIFIED = 0;
+  GRPC_STATUS_CODE_OK = 1;
+  GRPC_STATUS_CODE_INVALID_ARGUMENT = 2;
+  GRPC_STATUS_CODE_NOT_FOUND = 3;
+  GRPC_STATUS_CODE_PERMISSION_DENIED = 4;
+  GRPC_STATUS_CODE_UNAUTHENTICATED = 5;
+  GRPC_STATUS_CODE_RESOURCE_EXHAUSTED = 6;
+  GRPC_STATUS_CODE_UNAVAILABLE = 7;
+  GRPC_STATUS_CODE_INTERNAL = 8;
+}
+
+message BehaviorRequest {
+  GrpcStatusCode status_code = 1;
+  int32 delay_ms = 2;
+  string error_message = 3;
+  string detail_hint = 4;
+}
+
+message BehaviorResponse {
+  bool ok = 1;
+  string status_name = 2;
+  int32 delayed_ms = 3;
+  string note = 4;
+  google.protobuf.Timestamp completed_at = 5;
+}
+
+message StreamEventsRequest {
+  string topic = 1;
+  int32 count = 2;
+  int32 interval_ms = 3;
+  demo.common.v1.Priority min_priority = 4;
+}
+
+message ServerEvent {
+  int32 sequence = 1;
+  string topic = 2;
+  demo.common.v1.Priority priority = 3;
+  string payload = 4;
+  google.protobuf.Timestamp emitted_at = 5;
+  google.protobuf.Duration elapsed = 6;
+  map<string, string> metadata = 7;
+}
+
+message MetricPoint {
+  string metric_name = 1;
+  double value = 2;
+  map<string, string> labels = 3;
+  google.protobuf.Timestamp recorded_at = 4;
+}
+
+message MetricSummary {
+  int32 count = 1;
+  double sum = 2;
+  double min = 3;
+  double max = 4;
+  double average = 5;
+  repeated string distinct_metrics = 6;
+}
+
+message ChatMessage {
+  string sender = 1;
+  string body = 2;
+  google.protobuf.Timestamp sent_at = 3;
+  string mood = 4;
+}

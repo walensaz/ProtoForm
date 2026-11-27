@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Signature Theme: ProtoForm Paper (Architectural Daylight + Deep Teal)
+   Loaded after theme-light.css
+   ========================================================================== */
+
+.root {
+    -color-bg-default:     #e8ecf2;
+    -color-bg-subtle:      #f6f7f9;
+    -color-bg-inset:       #ffffff;
+    -color-border-subtle:  #d9e0ea;
+    -color-border-default: #c2ccd9;
+    -color-fg-default:     #141922;
+    -color-fg-muted:       #5a6577;
+    -color-accent-emphasis:#0f766e;
+    -color-accent-fg:      #0f766e;
+    -color-accent-subtle:  rgba(15, 118, 110, 0.11);
+    -color-accent-muted:   rgba(15, 118, 110, 0.28);
+
+    -pf-accent:          #0f766e;
+    -pf-accent-hover:    #115e59;
+    -pf-accent-text:     #0f766e;
+    -pf-accent-subtle:   rgba(15, 118, 110, 0.11);
+    -pf-accent-ring:     rgba(15, 118, 110, 0.28);
+}

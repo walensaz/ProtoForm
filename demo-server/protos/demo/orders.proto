@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package demo.orders.v1;
+
+import "demo/common.proto";
+import "google/protobuf/timestamp.proto";
+
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  rpc GetAdminAudit(AdminAuditRequest) returns (AdminAuditResponse);
+  rpc WatchOrderUpdates(WatchOrderRequest) returns (stream OrderUpdate);
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_CONFIRMED = 2;
+  ORDER_STATUS_PACKED = 3;
+  ORDER_STATUS_SHIPPED = 4;
+  ORDER_STATUS_DELIVERED = 5;
+}
+
+message OrderItem {
+  string sku = 1;
+  string name = 2;
+  int32 quantity = 3;
+  demo.common.v1.Money unit_price = 4;
+}
+
+message Order {
+  string order_id = 1;
+  string customer_id = 2;
+  OrderStatus status = 3;
+  repeated OrderItem items = 4;
+  demo.common.v1.Money total = 5;
+  demo.common.v1.Priority priority = 6;
+  map<string, string> labels = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message CreateOrderRequest {
+  string customer_id = 1;
+  repeated OrderItem items = 2;
+  demo.common.v1.Priority priority = 3;
+  map<string, string> labels = 4;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message ListOrdersRequest {
+  string customer_id = 1;
+  OrderStatus status_filter = 2;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  int32 total_count = 2;
+}
+
+message AdminAuditRequest {
+  bool include_order_ids = 1;
+}
+
+message AdminAuditResponse {
+  string authenticated_as = 1;
+  int32 total_orders = 2;
+  repeated string order_ids = 3;
+  google.protobuf.Timestamp audited_at = 4;
+}
+
+message WatchOrderRequest {
+  string order_id = 1;
+  int32 step_delay_ms = 2;
+}
+
+message OrderUpdate {
+  string order_id = 1;
+  OrderStatus status = 2;
+  string message = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}

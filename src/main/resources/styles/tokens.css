@@ -1,0 +1,96 @@
+/* ==========================================================================
+   ProtoForm Base Design Tokens (Shared Dark Defaults)
+   Per-theme overrides live in theme-carbon.css, theme-paper.css, theme-light.css
+   so Scene Popups (Tooltip, ContextMenu, ComboBoxPopup) inherit them natively.
+   ========================================================================== */
+
+.root {
+    -fx-font-family: "IBM Plex Sans";
+    -fx-font-size: 13.5px;
+
+    /* Surface & Ink Tokens (Dark Default: Primer Dark, Nord Dark, Cupertino Dark) */
+    -pf-bg-canvas:       -color-bg-default;
+    -pf-bg-pane:         -color-bg-subtle;
+    -pf-bg-card:         derive(-color-bg-subtle, 8%);
+    -pf-bg-input:        -color-bg-inset;
+    -pf-bg-zebra:        rgba(255, 255, 255, 0.03);
+    -pf-bg-hover:        rgba(255, 255, 255, 0.06);
+    -pf-bg-selected:     -color-accent-subtle;
+
+    -pf-border-subtle:   -color-border-subtle;
+    -pf-border-default:  -color-border-default;
+    -pf-border-strong:   -color-fg-muted;
+
+    -pf-fg-primary:      -color-fg-default;
+    -pf-fg-muted:        -color-fg-muted;
+    -pf-fg-on-accent:    #ffffff;
+
+    -pf-accent:          -color-accent-emphasis;
+    -pf-accent-hover:    derive(-color-accent-emphasis, -12%);
+    -pf-accent-text:     -color-accent-fg;
+    -pf-accent-subtle:   -color-accent-subtle;
+    -pf-accent-ring:     -color-accent-muted;
+
+    /* Dedicated Run / Execute CTA Colors (High-contrast >= 5.1:1 with white) */
+    -pf-run:             #15803d;
+    -pf-run-hover:       #166534;
+    -pf-fg-on-run:       #ffffff;
+
+    /* Semantic Status Colors (High-contrast >= 4.5:1 for solid buttons) */
+    -pf-success:         #047857;
+    -pf-success-hover:   #065f46;
+    -pf-success-bg:      rgba(16, 185, 129, 0.16);
+    -pf-success-border:  rgba(16, 185, 129, 0.42);
+    -pf-success-fg:      #34d399;
+
+    -pf-warning:         #d97706;
+    -pf-warning-bg:      rgba(245, 158, 11, 0.16);
+    -pf-warning-border:  rgba(245, 158, 11, 0.42);
+    -pf-warning-fg:      #fbbf24;
+
+    -pf-danger:          #dc2626;
+    -pf-danger-hover:    #b91c1c;
+    -pf-danger-bg:       rgba(239, 68, 68, 0.16);
+    -pf-danger-border:   rgba(239, 68, 68, 0.42);
+    -pf-danger-fg:       #f87171;
+
+    /* Protobuf Type Badge Colors (Dark) */
+    -pf-type-string-bg:     rgba(56, 189, 248, 0.14);
+    -pf-type-string-fg:     #38bdf8;
+    -pf-type-string-bd:     rgba(56, 189, 248, 0.35);
+
+    -pf-type-numeric-bg:    rgba(245, 158, 11, 0.14);
+    -pf-type-numeric-fg:    #fbbf24;
+    -pf-type-numeric-bd:    rgba(245, 158, 11, 0.35);
+
+    -pf-type-bool-bg:       rgba(167, 139, 250, 0.14);
+    -pf-type-bool-fg:       #c4b5fd;
+    -pf-type-bool-bd:       rgba(167, 139, 250, 0.35);
+
+    -pf-type-enum-bg:       rgba(45, 212, 191, 0.14);
+    -pf-type-enum-fg:       #2dd4bf;
+    -pf-type-enum-bd:       rgba(45, 212, 191, 0.35);
+
+    -pf-type-message-bg:    rgba(96, 165, 250, 0.14);
+    -pf-type-message-fg:    #60a5fa;
+    -pf-type-message-bd:    rgba(96, 165, 250, 0.35);
+
+    -pf-type-repeated-bg:   rgba(251, 113, 133, 0.14);
+    -pf-type-repeated-fg:   #fb7185;
+    -pf-type-repeated-bd:   rgba(251, 113, 133, 0.35);
+
+    -pf-type-map-bg:        rgba(232, 121, 249, 0.14);
+    -pf-type-map-fg:        #e879f9;
+    -pf-type-map-bd:        rgba(232, 121, 249, 0.35);
+
+    /* JSON Syntax Highlighting (Dark) */
+    -pf-json-key:        #5eead4;
+    -pf-json-string:     #fcd34d;
+    -pf-json-number:     #93c5fd;
+    -pf-json-bool:       #f9a8d4;
+    -pf-json-null:       #94a3b8;
+    -pf-json-brace:      #9ca3af;
+    -pf-json-selection:  rgba(20, 184, 166, 0.28);
+    -pf-gutter-bg:       rgba(0, 0, 0, 0.20);
+    -pf-gutter-fg:       #6b7280;
+}
