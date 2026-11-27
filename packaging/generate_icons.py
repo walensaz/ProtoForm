@@ -2,7 +2,6 @@
 """Generate ProtoForm multi-resolution PNG and Windows ICO assets with zero external dependencies."""
 
 import math
-import os
 import struct
 import zlib
 from pathlib import Path
@@ -13,6 +12,8 @@ def clamp(v: float, lo: float = 0.0, hi: float = 1.0) -> float:
 
 
 def smoothstep(edge0: float, edge1: float, x: float) -> float:
+    if abs(edge1 - edge0) < 1e-9:
+        return 1.0 if x >= edge1 else 0.0
     t = clamp((x - edge0) / (edge1 - edge0))
     return t * t * (3.0 - 2.0 * t)
 
@@ -29,18 +30,19 @@ def blend(dst, src):
     out_a = sa + da * (1.0 - sa)
     if out_a <= 1e-6:
         return (0.0, 0.0, 0.0, 0.0)
-    out_r = (sr * sa + dr * da * (1.0 - sa)) / out_a
-    out_g = (sg * sa + dg * da * (1.0 - sa)) / out_a
-    out_b = (sb * sa + db * da * (1.0 - sa)) / out_a
-    return (out_r, out_g, out_b, out_a)
+    return (
+        (sr * sa + dr * da * (1.0 - sa)) / out_a,
+        (sg * sa + dg * da * (1.0 - sa)) / out_a,
+        (sb * sa + db * da * (1.0 - sa)) / out_a,
+        out_a,
+    )
 
 
 def sd_rounded_box(px: float, py: float, cx: float, cy: float, hw: float, hh: float, r: float) -> float:
+    r = min(r, hw, hh)
     dx = abs(px - cx) - hw + r
     dy = abs(py - cy) - hh + r
-    ox = max(dx, 0.0)
-    oy = max(dy, 0.0)
-    return math.hypot(ox, oy) + min(max(dx, dy), 0.0) - r
+    return math.hypot(max(dx, 0.0), max(dy, 0.0)) + min(max(dx, dy), 0.0) - r
 
 
 def sd_segment(px: float, py: float, ax: float, ay: float, bx: float, by: float) -> float:
@@ -51,11 +53,124 @@ def sd_segment(px: float, py: float, ax: float, ay: float, bx: float, by: float)
     return math.hypot(pax - bax * h, pay - bay * h)
 
 
+def sd_symmetric_poly(px: float, py: float, pts_right: list[tuple[float, float]], round_r: float = 0.0) -> float:
+    """Seamless symmetric polygon SDF around x=0.50 without center-seam artifacts."""
+    full = list(pts_right) + [(1.0 - x, y) for (x, y) in reversed(pts_right) if abs(x - 0.50) > 1e-6]
+    n = len(full)
+    d2 = 1e9
+    inside = False
+    j = n - 1
+    for i in range(n):
+        xi, yi = full[i]
+        xj, yj = full[j]
+        ex, ey = xj - xi, yj - yi
+        wx, wy = px - xi, py - yi
+        denom = ex * ex + ey * ey
+        t = clamp((wx * ex + wy * ey) / denom) if denom > 1e-12 else 0.0
+        cx, cy = wx - ex * t, wy - ey * t
+        d2 = min(d2, cx * cx + cy * cy)
+        if ((yi > py) != (yj > py)) and (px < (xj - xi) * (py - yi) / (yj - yi + 1e-12) + xi):
+            inside = not inside
+        j = i
+    return (-math.sqrt(d2) if inside else math.sqrt(d2)) - round_r
+
+
+def shade_sculpted(px_col, box_alpha, nx, ny, aa, size, fn, c_top, c_bot, bevel=(1.0, 1.0, 1.0), shadow_a=0.60):
+    d = fn(nx, ny)
+    if size >= 32 and shadow_a > 0.0:
+        d_sh = fn(nx, ny - 0.028)
+        px_col = blend(px_col, (0.01, 0.02, 0.04, (1.0 - smoothstep(-0.02, 0.048, d_sh)) * box_alpha * shadow_a))
+    a = (1.0 - smoothstep(-aa, aa, d)) * box_alpha
+    t = clamp((ny - 0.18) / 0.64)
+    r = lerp(c_top[0] / 255.0, c_bot[0] / 255.0, t)
+    g = lerp(c_top[1] / 255.0, c_bot[1] / 255.0, t)
+    b = lerp(c_top[2] / 255.0, c_bot[2] / 255.0, t)
+    if size >= 48:
+        d_off = fn(nx - 0.012, ny - 0.014)
+        bev = clamp((d_off - d) / 0.02) * 0.28
+        r, g, b = lerp(r, bevel[0], bev), lerp(g, bevel[1], bev), lerp(b, bevel[2], bev)
+    return blend(px_col, (r, g, b, a))
+
+
+def draw_node(px_col, box_alpha, nx, ny, aa, cx, cy, r_outer, r_core):
+    d_n = math.hypot(nx - cx, ny - cy) - r_outer
+    px_col = blend(px_col, (0x2d / 255.0, 0xd4 / 255.0, 0xbf / 255.0, (1.0 - smoothstep(-aa, aa, d_n)) * box_alpha))
+    d_c = math.hypot(nx - cx, ny - cy) - r_core
+    px_col = blend(px_col, (0xf0 / 255.0, 0xfd / 255.0, 0xfa / 255.0, (1.0 - smoothstep(-aa, aa, d_c)) * box_alpha))
+    return px_col
+
+
+def sample_sentinel_owl(nx: float, ny: float, aa: float, size: int):
+    """Render Carbon tile + ProtoForm Sentinel Owl emblem."""
+    hw = 0.455 if size <= 32 else 0.445
+    d_box = sd_rounded_box(nx, ny, 0.5, 0.5, hw, hw, 0.16)
+    box_alpha = 1.0 - smoothstep(-aa, aa, d_box)
+
+    grad_t = clamp(nx * 0.30 + ny * 0.70)
+    bg_r = lerp(0x21 / 255.0, 0x0d / 255.0, grad_t)
+    bg_g = lerp(0x28 / 255.0, 0x10 / 255.0, grad_t)
+    bg_b = lerp(0x36 / 255.0, 0x15 / 255.0, grad_t)
+
+    glow_d = math.hypot(nx - 0.50, ny - 0.46)
+    glow = (1.0 - smoothstep(0.04, 0.56, glow_d)) * 0.25
+    bg_r = lerp(bg_r, 0x14 / 255.0, glow)
+    bg_g = lerp(bg_g, 0xb8 / 255.0, glow)
+    bg_b = lerp(bg_b, 0xa6 / 255.0, glow)
+
+    px_col = (bg_r, bg_g, bg_b, box_alpha)
+
+    if size >= 32:
+        top_hl = (1.0 - smoothstep(0.0, 0.045, abs(d_box + 0.018))) * clamp(1.0 - (ny - 0.05) * 2.2) * box_alpha * 0.22
+        px_col = blend(px_col, (0xe2 / 255.0, 0xe8 / 255.0, 0xf0 / 255.0, top_hl))
+
+    border_d = abs(d_box + 0.013) - 0.012
+    border_alpha = (1.0 - smoothstep(-aa, aa, border_d)) * box_alpha * 0.90
+    px_col = blend(px_col, (0x38 / 255.0, 0x48 / 255.0, 0x5e / 255.0, border_alpha))
+
+    # Outer faceted owl shield
+    head_pts = [(0.50, 0.30), (0.78, 0.20), (0.76, 0.56), (0.50, 0.80)]
+    head_fn = lambda x, y: sd_symmetric_poly(x, y, head_pts, round_r=0.018)
+    px_col = shade_sculpted(px_col, box_alpha, nx, ny, aa, size, head_fn, (0x2d, 0x3b, 0x4e), (0x16, 0x20, 0x2d))
+
+    d_hd = head_fn(nx, ny)
+    d_rim = abs(d_hd + 0.010) - (0.015 if size <= 32 else 0.010)
+    px_col = blend(px_col, (0x2d / 255.0, 0xd4 / 255.0, 0xbf / 255.0, (1.0 - smoothstep(-aa, aa, d_rim)) * box_alpha * 0.90))
+
+    # Dark inner eye-mask visor
+    mask_pts = [(0.50, 0.37), (0.71, 0.31), (0.69, 0.54), (0.50, 0.62)]
+    d_mask = sd_symmetric_poly(nx, ny, mask_pts, round_r=0.025)
+    px_col = blend(px_col, (0x0c / 255.0, 0x11 / 255.0, 0x17 / 255.0, (1.0 - smoothstep(-aa, aa, d_mask)) * box_alpha * 0.85))
+
+    # Sculpted platinum V-brow / ear-horns
+    st_brow = 0.036 if size <= 32 else 0.030
+    brow_fn = lambda x, y: min(
+        sd_segment(x, y, 0.22, 0.21, 0.50, 0.38),
+        sd_segment(x, y, 0.78, 0.21, 0.50, 0.38),
+    ) - st_brow
+    px_col = shade_sculpted(px_col, box_alpha, nx, ny, aa, size, brow_fn, (0xf8, 0xfa, 0xfc), (0xcb, 0xd5, 0xe1), shadow_a=0.45)
+
+    # Signal-teal diamond beak
+    beak_fn = lambda x, y: sd_symmetric_poly(x, y, [(0.50, 0.53), (0.565, 0.62), (0.50, 0.74)], round_r=0.008)
+    px_col = shade_sculpted(px_col, box_alpha, nx, ny, aa, size, beak_fn, (0x5e, 0xea, 0xd4), (0x0f, 0x76, 0x6e), shadow_a=0.35)
+
+    # Luminous signal-node eyes
+    r_out = 0.072 if size <= 32 else 0.060
+    r_cor = 0.035 if size <= 32 else 0.028
+    px_col = draw_node(px_col, box_alpha, nx, ny, aa, 0.355, 0.475, r_out, r_cor)
+    px_col = draw_node(px_col, box_alpha, nx, ny, aa, 0.645, 0.475, r_out, r_cor)
+    return px_col
+
+
 def render_icon(size: int) -> bytes:
-    """Render an RGBA byte buffer (size x size x 4) using 2x2 supersampling."""
-    aa = 1.0 / (size * 1.15)
+    """Render an RGBA byte buffer (size x size x 4) using 4x4 supersampling at <=64px and 2x2 at >=128px."""
+    aa = (0.68 / size) if size <= 32 else (1.0 / (size * 1.18))
+    if size <= 64:
+        grid = (-0.375, -0.125, 0.125, 0.375)
+    else:
+        grid = (-0.25, 0.25)
+    samples = [(sx, sy) for sy in grid for sx in grid]
+    n_samples = float(len(samples))
     buf = bytearray(size * size * 4)
-    samples = ((-0.25, -0.25), (0.25, -0.25), (-0.25, 0.25), (0.25, 0.25))
 
     for y in range(size):
         for x in range(size):
@@ -63,70 +178,16 @@ def render_icon(size: int) -> bytes:
             for sx, sy in samples:
                 nx = (x + 0.5 + sx) / size
                 ny = (y + 0.5 + sy) / size
-
-                # Base rounded graphite square
-                d_box = sd_rounded_box(nx, ny, 0.5, 0.5, 0.44, 0.44, 0.14)
-                box_alpha = 1.0 - smoothstep(-aa, aa, d_box)
-
-                grad_t = clamp((nx * 0.35 + ny * 0.65))
-                bg_r = lerp(0x1f / 255.0, 0x10 / 255.0, grad_t)
-                bg_g = lerp(0x25 / 255.0, 0x12 / 255.0, grad_t)
-                bg_b = lerp(0x30 / 255.0, 0x16 / 255.0, grad_t)
-
-                # Subtle inner teal radial glow behind glyph
-                glow_d = math.hypot(nx - 0.50, ny - 0.46)
-                glow = (1.0 - smoothstep(0.05, 0.48, glow_d)) * 0.18
-                bg_r = lerp(bg_r, 0x2d / 255.0, glow)
-                bg_g = lerp(bg_g, 0xd4 / 255.0, glow)
-                bg_b = lerp(bg_b, 0xbf / 255.0, glow)
-
-                px_col = (bg_r, bg_g, bg_b, box_alpha)
-
-                # Crisp 1px-feel rim border
-                border_d = abs(d_box + 0.016) - 0.014
-                border_alpha = (1.0 - smoothstep(-aa, aa, border_d)) * box_alpha * 0.85
-                px_col = blend(px_col, (0x33 / 255.0, 0x41 / 255.0, 0x55 / 255.0, border_alpha))
-
-                # Signal-teal '>' chevron + '_' terminal prompt / RPC stream bar
-                stroke = 0.048
-                d_chev_top = sd_segment(nx, ny, 0.25, 0.34, 0.44, 0.50) - stroke
-                d_chev_bot = sd_segment(nx, ny, 0.44, 0.50, 0.25, 0.66) - stroke
-                d_chev = min(d_chev_top, d_chev_bot)
-                chev_alpha = 1.0 - smoothstep(-aa, aa, d_chev)
-
-                # Underscore / RPC pulse bar + node dot
-                d_bar = sd_segment(nx, ny, 0.51, 0.64, 0.74, 0.64) - 0.042
-                bar_alpha = 1.0 - smoothstep(-aa, aa, d_bar)
-
-                # Top-right signal node + connector stem (evoking gRPC bidirectional node)
-                d_stem = sd_segment(nx, ny, 0.56, 0.37, 0.72, 0.37) - 0.026
-                d_node = math.hypot(nx - 0.73, ny - 0.37) - 0.068
-                node_alpha = 1.0 - smoothstep(-aa, aa, min(d_stem, d_node))
-
-                # Gradient across teal glyph
-                gt = clamp((ny - 0.28) / 0.42)
-                tr = lerp(0x5e / 255.0, 0x0f / 255.0, gt * 0.65)
-                tg = lerp(0xea / 255.0, 0x76 / 255.0, gt * 0.65)
-                tb = lerp(0xd4 / 255.0, 0x6e / 255.0, gt * 0.65)
-
-                glyph_alpha = max(chev_alpha, bar_alpha) * box_alpha
-                px_col = blend(px_col, (tr, tg, tb, glyph_alpha))
-                px_col = blend(px_col, (0x2d / 255.0, 0xd4 / 255.0, 0xbf / 255.0, node_alpha * box_alpha))
-
-                # Bright core inside node dot
-                core_alpha = (1.0 - smoothstep(-aa, aa, math.hypot(nx - 0.73, ny - 0.37) - 0.028)) * box_alpha
-                px_col = blend(px_col, (0xf0 / 255.0, 0xfd / 255.0, 0xfa / 255.0, core_alpha))
-
-                ar += px_col[0]
-                ag += px_col[1]
-                ab += px_col[2]
-                aa_acc += px_col[3]
-
+                r, g, b, a = sample_sentinel_owl(nx, ny, aa, size)
+                ar += r
+                ag += g
+                ab += b
+                aa_acc += a
             idx = (y * size + x) * 4
-            buf[idx] = int(clamp(ar / 4.0) * 255 + 0.5)
-            buf[idx + 1] = int(clamp(ag / 4.0) * 255 + 0.5)
-            buf[idx + 2] = int(clamp(ab / 4.0) * 255 + 0.5)
-            buf[idx + 3] = int(clamp(aa_acc / 4.0) * 255 + 0.5)
+            buf[idx] = int(clamp(ar / n_samples) * 255 + 0.5)
+            buf[idx + 1] = int(clamp(ag / n_samples) * 255 + 0.5)
+            buf[idx + 2] = int(clamp(ab / n_samples) * 255 + 0.5)
+            buf[idx + 3] = int(clamp(aa_acc / n_samples) * 255 + 0.5)
 
     return bytes(buf)
 
@@ -195,7 +256,7 @@ def main() -> None:
 
     (pkg_icons / "protoform.png").write_bytes(encode_png(512, rendered[512]))
     write_ico(pkg_icons / "protoform.ico", [(s, rendered[s]) for s in (16, 32, 48, 64, 128, 256)])
-    print("Generated ProtoForm PNG and ICO icon assets.")
+    print("Generated ProtoForm Sentinel Owl PNG and ICO icon assets.")
 
 
 if __name__ == "__main__":

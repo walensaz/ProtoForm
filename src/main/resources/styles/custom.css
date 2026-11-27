@@ -72,6 +72,30 @@
     -fx-icon-color: -pf-accent-text;
 }
 
+.brand-owl-shield {
+    -fx-fill: -pf-bg-card;
+    -fx-stroke: -pf-accent-text;
+    -fx-stroke-width: 1.1px;
+}
+
+.brand-owl-brow {
+    -fx-fill: transparent;
+    -fx-stroke: -pf-fg-primary;
+    -fx-stroke-width: 1.85px;
+}
+
+.brand-owl-eye {
+    -fx-fill: -pf-accent-text;
+}
+
+.brand-owl-pupil {
+    -fx-fill: -pf-fg-on-accent;
+}
+
+.brand-owl-beak {
+    -fx-fill: -pf-accent-text;
+}
+
 .brand-title {
     -fx-font-size: 14.5px;
     -fx-font-weight: 700;

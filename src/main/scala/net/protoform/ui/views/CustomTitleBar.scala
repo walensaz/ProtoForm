@@ -4,6 +4,7 @@ import javafx.application.Platform
 import javafx.geometry.{Insets, Pos, Side}
 import javafx.scene.control._
 import javafx.scene.layout._
+import javafx.scene.shape.{Circle, SVGPath, StrokeLineCap, StrokeLineJoin}
 import javafx.stage.Stage
 import net.protoform.application.WorkspaceService
 import net.protoform.ui.state.AppState
@@ -50,10 +51,40 @@ class CustomTitleBar(
   getStyleClass.add("custom-title-bar")
 
   // --- Left Section: Brand Quick Menu + Unified Target Pill + Environment ---
-  val icon = FontIcon.of(Feather.TERMINAL, 14)
-  icon.getStyleClass.add("brand-icon")
+  private def createBrandOwlMark(): Pane = {
+    val shield = new SVGPath()
+    shield.setContent("M 8 4.6 L 13.6 2.6 L 13.0 9.5 L 8 14.2 L 3.0 9.5 L 2.4 2.6 Z")
+    shield.getStyleClass.add("brand-owl-shield")
+    shield.setStrokeLineJoin(StrokeLineJoin.ROUND)
 
-  val brandMark = new StackPane(icon)
+    val brow = new SVGPath()
+    brow.setContent("M 2.2 2.8 L 8 5.9 L 13.8 2.8")
+    brow.getStyleClass.add("brand-owl-brow")
+    brow.setStrokeLineCap(StrokeLineCap.ROUND)
+    brow.setStrokeLineJoin(StrokeLineJoin.ROUND)
+
+    val leftEye = new Circle(5.3, 7.8, 1.55)
+    leftEye.getStyleClass.add("brand-owl-eye")
+    val leftPupil = new Circle(5.3, 7.8, 0.68)
+    leftPupil.getStyleClass.add("brand-owl-pupil")
+
+    val rightEye = new Circle(10.7, 7.8, 1.55)
+    rightEye.getStyleClass.add("brand-owl-eye")
+    val rightPupil = new Circle(10.7, 7.8, 0.68)
+    rightPupil.getStyleClass.add("brand-owl-pupil")
+
+    val beak = new SVGPath()
+    beak.setContent("M 8 8.6 L 9.25 10.35 L 8 12.6 L 6.75 10.35 Z")
+    beak.getStyleClass.add("brand-owl-beak")
+
+    val pane = new Pane(shield, brow, leftEye, leftPupil, rightEye, rightPupil, beak)
+    pane.setMinSize(16, 16)
+    pane.setPrefSize(16, 16)
+    pane.setMaxSize(16, 16)
+    pane
+  }
+
+  val brandMark = new StackPane(createBrandOwlMark())
   brandMark.getStyleClass.add("brand-mark")
 
   val brandTitle = new Label("ProtoForm")
