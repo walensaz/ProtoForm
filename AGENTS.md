@@ -13,13 +13,13 @@
 
 **ProtoForm** is a cross-platform desktop gRPC GUI client with zero-setup server reflection (`v1` + `v1alpha` fallback), default-visible dynamic forms, bi-directional form/JSON sync, auth profiles, full unary/streaming support, and standalone fat-JAR packaging (`~40 MB`).
 
-- **Stack**: Scala 3.3.3 (`-no-indent`), JavaFX 21 LTS, AtlantaFX 2.0.1, RichTextFX 0.11.2, Ikonli Feather, `grpc-netty-shaded` 1.64, Protobuf 3.25, Gson 2.10, ScalaTest 3.2.
+- **Stack**: Scala 3.3.7 (`-no-indent`), Java 25 LTS / JavaFX 25.0.5 (`StageStyle.EXTENDED` + `HeaderBar`), AtlantaFX 2.1.0, RichTextFX 0.11.7, Ikonli Feather, `grpc-netty-shaded` 1.64, Protobuf 3.25, Gson 2.10, ScalaTest 3.2.
 - **Themes & Fonts**: ProtoForm Carbon (default), ProtoForm Paper, Primer, Nord, Cupertino; bundled `IBM Plex Sans` & `JetBrains Mono`.
 
 ```powershell
 sbt test                                     # Compile (with -no-indent) and run ScalaTest suite
 sbt assembly                                 # Build standalone fat JAR (net.protoform.Launcher)
-java -jar target/scala-3.3.3/protoform-1.0.0.jar  # Launch ProtoForm
+java -jar target/scala-3.3.7/protoform-1.0.0.jar  # Launch ProtoForm
 .\packaging\package-windows.ps1              # Build reduced-JRE jpackage bundle & zip
 sbt "demoServer/run"                         # Launch local demo gRPC server on 127.0.0.1:50051
 sbt "demoServer/test"                        # Run demoServer integration tests

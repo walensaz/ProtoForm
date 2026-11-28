@@ -19,7 +19,7 @@ To run **ProtoForm** and the **Demo Server** at the same time without `sbt` serv
    .\run.bat
    ```
 
-> **Tip:** If you prefer running directly from `sbt` during active coding, you can also run `sbt "demoServer/assembly"` once and launch `java -jar demo-server\target\scala-3.3.3\protoform-demo-server-1.0.0.jar` in the background while keeping your `sbt` shell free for ProtoForm (`sbt run` / `sbt test`).
+> **Tip:** If you prefer running directly from `sbt` during active coding, you can also run `sbt "demoServer/assembly"` once and launch `java -jar demo-server\target\scala-3.3.7\protoform-demo-server-1.0.0.jar` in the background while keeping your `sbt` shell free for ProtoForm (`sbt run` / `sbt test`).
 
 Then in **ProtoForm**:
 1. Enter `127.0.0.1:50051` in the target bar (plaintext / TLS off).

@@ -65,7 +65,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: "21"
+          java-version: "25"
       - uses: sbt/setup-sbt@v1
       - name: Install WiX Toolset v3
         shell: pwsh
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: "21"
+          java-version: "25"
       - uses: sbt/setup-sbt@v1
       - name: Build macOS DMG & portable zip
         run: |
@@ -162,7 +162,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: "21"
+          java-version: "25"
       - uses: sbt/setup-sbt@v1
       - name: Install Linux packaging tools
         run: |
@@ -173,7 +173,7 @@ jobs:
           chmod +x packaging/package-unix.sh
           ./packaging/package-unix.sh "${{ needs.prepare-release.outputs.version }}"
           sbt -Dprotoform.universal=true assembly
-          cp target/scala-3.3.3/protoform-*.jar dist/
+          cp target/scala-3.3.7/protoform-*.jar dist/
       - name: Upload Linux & universal JAR assets directly to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

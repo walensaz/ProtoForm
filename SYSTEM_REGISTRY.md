@@ -105,7 +105,7 @@ This registry tracks the component inventory, source file paths, architectural r
 |---|---|---|
 | `Launcher` | `Launcher.scala` | Static main entry point for standalone fat-JAR execution without `--module-path`. |
 | `ProtoFormApp` | `ProtoFormApp.scala` | JavaFX primary stage setup, 2-pane default split + collapsible rail/drawer, live debounced resize/divider persistence, drag-and-drop tab persistence, workspace & environment switching, shortcuts (`Ctrl+Enter`, `Ctrl+K`, `Ctrl+B`, `Ctrl+1/2/3/4`, `Ctrl+L`, `Ctrl+T`, `Ctrl+W`, `Ctrl+Tab`, `Ctrl+,`), and lifecycle coordinator. |
-| `CustomTitleBar` | `ui/views/CustomTitleBar.scala` | Unified `46px` header bar with Quick Settings menu (`>_ ProtoForm`), labeled `[Workspace: <name> ▾]` menu button (switch / `+ New Workspace…` / open sidebar), embedded `TargetBarControl`, Environment Switcher, Jump button, Response Pane toggle, Settings, and window controls. |
+| `CustomTitleBar` | `ui/views/CustomTitleBar.scala` | Unified `46px` JavaFX 25 `HeaderBar` integrating native OS traffic lights / caption buttons with Quick Settings menu (`>_ ProtoForm`), `[Workspace: <name> ▾]` menu, `TargetBarControl`, Environment Switcher, Jump, Response toggle, and Settings. |
 | `TargetBarControl` | `ui/views/TargetBarControl.scala` | Flush 4-segment Target Pill (`TLS` lock toggle, editable endpoint combo, `Refl`/schema menu for Reflection/`.desc`/`.proto`/Kubernetes Port-Forward/Health, and icon-only `↻` Introspect button) embedded in `CustomTitleBar`. |
 | `KubePortForwardDialog` | `ui/views/KubePortForwardDialog.scala` | Custom-chromed `kubectl` context/namespace/service/pod browser and active port-forward tunnel manager. |
 | `WorkbenchTabBar` | `ui/views/WorkbenchTabBar.scala` | `34px` multi-tab workbench strip (`[+]`, close `×`, streaming dot, dirty dot, middle-click & context menu) swapping `WorkbenchTabSession`s cleanly. |
@@ -128,7 +128,7 @@ This registry tracks the component inventory, source file paths, architectural r
 | `MetadataEditor` | `ui/views/MetadataEditor.scala` | Auth Profile selector, Auth Preset inputs, custom headers with `.row-delete-btn`, and session auth persistence. |
 | `ResponsePane` | `ui/views/ResponsePane.scala` | Symmetric `48px` `.pane-header-bar` with short status/latency/size pills, uniform `29×29px` centered icon controls (`Copy`, `Pop Out`, `•••` for `Pin`/`Diff`/`Clear Stream`, or expanded inline buttons in Advanced mode), wrapping gRPC error summary banner, read-only `JsonCodeArea` with empty-state overlay, `HEADER`/`TRAILER` pill-badged copyable metadata table, and master-detail `Stream Log`. |
 | `TabDragSupport` | `ui/util/TabDragSupport.scala` | Drag-and-drop tab reordering within and across `RequestPane` ↔ `ResponsePane` with `.tab-drop-target` feedback. |
-| `WindowStateController`, `WindowResizeHelper`, `CustomDialogStage`, `DockingManager` | `ui/util/` | Dock/taskbar-aware maximize/restore-on-drag, bounds persistence (`820 × 560` min), native `DECORATED` macOS chrome + `UNDECORATED` Win/Linux 8-direction resize (`8px`/`5px`/`14px` hit zones, `4px`-threshold header drag), themed modal/confirmation (`showConfirm`) factory, and floating `ResponsePane` docking. |
+| `WindowStateController`, `CustomDialogStage`, `DockingManager` | `ui/util/` | Native `StageStyle.EXTENDED` / `HeaderBar` bounds & maximize persistence (`820 × 560` min, post-show positioning), themed modal/confirmation (`showConfirm`) factory, and floating `ResponsePane` docking. |
 | `ThemeManager`, `AppState` | `ui/theme/ThemeManager.scala`, `ui/state/AppState.scala` | Bundled `IBM Plex Sans`/`JetBrains Mono`, multi-resolution app icons (`applyStageIcons`), swapped CSS stacks across scenes, and central reactive properties (including environments and pinned baseline). |
 
 ---
@@ -157,7 +157,7 @@ This registry tracks the component inventory, source file paths, architectural r
 | `NettyGrpcChannelAdapterSpec` | `infrastructure/NettyGrpcChannelAdapterSpec.scala` | Channel pooling/keying by `(uriString, overrideAuthority, tlsCertPath, insecureSkipTlsVerify, clientCertPath, clientKeyPath, maxInboundBytes)`, mTLS pair validation, reuse, and shutdown. |
 | `KubectlPortForwardAdapterSpec` | `infrastructure/KubectlPortForwardAdapterSpec.scala` | `kubectl` context/namespace/target JSON parsing and port-forward bound local port extraction. |
 | `DynamicAuthResolverSpec` | `infrastructure/DynamicAuthResolverSpec.scala` | `HS256`/`RS256` Signed JWT structure/signing and Google Cloud error handling. |
-| `WindowResizeHelperSpec` | `ui/util/WindowResizeHelperSpec.scala` | 8-direction edge/corner hit detection, anchor-preserving resize bounds, min-size clamping, and macOS menu-bar `minY` clamping. |
+| `WindowStateControllerSpec` | `ui/util/WindowStateControllerSpec.scala` | Multi-display screen-bounds clamping, minimum window dimensions (`820 × 560`), and off-screen coordinate recovery. |
 
 ---
 

@@ -11,9 +11,9 @@ if [ "$SKIP_BUILD" != "1" ]; then
   sbt test assembly
 fi
 
-JAR_PATH="$REPO_ROOT/target/scala-3.3.3/protoform-${VERSION}.jar"
+JAR_PATH="$REPO_ROOT/target/scala-3.3.7/protoform-${VERSION}.jar"
 if [ ! -f "$JAR_PATH" ]; then
-  JAR_PATH="$(ls "$REPO_ROOT"/target/scala-3.3.3/protoform-*.jar | head -n 1)"
+  JAR_PATH="$(ls "$REPO_ROOT"/target/scala-3.3.7/protoform-*.jar | head -n 1)"
 fi
 JAR_NAME="$(basename "$JAR_PATH")"
 
@@ -59,6 +59,8 @@ if [ "$OS" = "Darwin" ]; then
     --add-modules "$REDUCED_MODULES" \
     --jlink-options "$JLINK_OPTS" \
     --java-options "-Xmx1024m" \
+    --java-options "-Djavafx.enablePreview=true" \
+    --java-options "-Djavafx.suppressPreviewWarning=true" \
     --dest "$DIST_DIR"
 
   ZIP_PATH="$DIST_DIR/ProtoForm-${VERSION}-macos-${ARCH}-portable.zip"
@@ -98,6 +100,8 @@ elif [ "$OS" = "Linux" ]; then
     --add-modules "$REDUCED_MODULES" \
     --jlink-options "$JLINK_OPTS" \
     --java-options "-Xmx1024m" \
+    --java-options "-Djavafx.enablePreview=true" \
+    --java-options "-Djavafx.suppressPreviewWarning=true" \
     --dest "$DIST_DIR"
 
   ZIP_PATH="$DIST_DIR/ProtoForm-${VERSION}-linux-${ARCH}-portable.zip"

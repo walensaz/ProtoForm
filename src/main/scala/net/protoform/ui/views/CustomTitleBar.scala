@@ -1,7 +1,7 @@
 package net.protoform.ui.views
 
 import javafx.application.Platform
-import javafx.geometry.{Insets, Pos, Side}
+import javafx.geometry.{Insets, Orientation, Pos, Side}
 import javafx.scene.control._
 import javafx.scene.layout._
 import javafx.scene.shape.{Circle, SVGPath, StrokeLineCap, StrokeLineJoin}
@@ -9,7 +9,6 @@ import javafx.stage.Stage
 import net.protoform.application.WorkspaceService
 import net.protoform.ui.state.AppState
 import net.protoform.ui.theme.ThemeManager
-import net.protoform.ui.util.{WindowResizeHelper, WindowStateController}
 import org.kordamp.ikonli.feather.Feather
 import org.kordamp.ikonli.javafx.FontIcon
 
@@ -35,17 +34,15 @@ trait TitleBarActions {
 
 class CustomTitleBar(
   stage: Stage,
-  windowController: WindowStateController,
   appState: AppState,
   workspaceService: WorkspaceService,
   targetBar: TargetBarControl,
-  actions: TitleBarActions,
-  onCloseRequested: () => Unit
-) extends HBox(8) {
+  actions: TitleBarActions
+) extends HeaderBar {
 
-  setAlignment(Pos.CENTER_LEFT)
   setPadding(new Insets(6, 10, 6, 10))
   setMinWidth(0)
+  HeaderBar.setPrefButtonHeight(stage, 46.0)
   getStyleClass.add("custom-title-bar")
 
   // --- Left Section: Brand Quick Menu + Unified Target Pill + Environment ---
@@ -224,25 +221,7 @@ class CustomTitleBar(
     }
   }
 
-  // --- Center Draggable Region ---
-  val dragSpacer = new Region()
-  dragSpacer.setMinWidth(0)
-  HBox.setHgrow(dragSpacer, Priority.ALWAYS)
-
-  if (!WindowResizeHelper.isMacOS) {
-    WindowResizeHelper.installHeaderDrag(
-      header = this,
-      stage = stage,
-      isMaximized = () => windowController.isMaximized || stage.isMaximized,
-      onRestoreForDrag = (sx, sy) => {
-        if (stage.isMaximized) stage.setMaximized(false)
-        windowController.restoreForDrag(sx, sy)
-      },
-      onDoubleClick = Some(() => windowController.toggleMaximize())
-    )
-  }
-
-  // --- Right Section: Quick Switcher, Response Toggle & Window Controls ---
+  // --- HeaderBar Leading & Trailing Regions (Native System Traffic Lights / Caption Buttons) ---
   val quickSearchBtn = new Button("Jump", FontIcon.of(Feather.COMMAND, 12))
   quickSearchBtn.getStyleClass.addAll("small", "subtle", "interactive-hand")
   quickSearchBtn.setMinWidth(Region.USE_PREF_SIZE)
@@ -268,47 +247,23 @@ class CustomTitleBar(
   settingsIconBtn.setTooltip(new Tooltip("All Settings (Ctrl+,)"))
   settingsIconBtn.setOnAction(_ => actions.openSettingsDialog())
 
-  // Window Controls
-  val minimizeBtn = new Button("", FontIcon.of(Feather.MINUS, 12))
-  minimizeBtn.getStyleClass.addAll("window-control-btn", "interactive-hand")
-  minimizeBtn.setTooltip(new Tooltip("Minimize"))
-  minimizeBtn.setOnAction(_ => stage.setIconified(true))
+  List(brandMenuButton, workspaceMenuButton, targetBar, envCombo, quickSearchBtn, toggleRespBtn, settingsIconBtn)
+    .foreach(HeaderBar.setDragType(_, HeaderDragType.NONE))
 
-  val maximizeIcon = FontIcon.of(Feather.SQUARE, 12)
-  val maximizeBtn = new Button("", maximizeIcon)
-  maximizeBtn.getStyleClass.addAll("window-control-btn", "interactive-hand")
-  maximizeBtn.setTooltip(new Tooltip("Maximize / Restore"))
-  maximizeBtn.setOnAction { _ =>
-    windowController.toggleMaximize()
-  }
+  private val leadingBox = new HBox(8, brandMenuButton, workspaceMenuButton, targetBar, envCombo)
+  leadingBox.setAlignment(Pos.CENTER_LEFT)
+  leadingBox.setMinWidth(0)
+  HeaderBar.setAlignment(leadingBox, Pos.CENTER_LEFT)
+  HeaderBar.setDragType(leadingBox, HeaderDragType.DRAGGABLE_SUBTREE)
 
-  windowController.isMaximizedProperty.addListener { (_, _, isMax) =>
-    Platform.runLater { () =>
-      maximizeIcon.setIconCode(if (isMax) Feather.COPY else Feather.SQUARE)
-    }
-  }
+  private val trailingBox = new HBox(6, quickSearchBtn, new Separator(Orientation.VERTICAL), toggleRespBtn, settingsIconBtn)
+  trailingBox.setAlignment(Pos.CENTER_RIGHT)
+  trailingBox.setMinWidth(Region.USE_PREF_SIZE)
+  HeaderBar.setAlignment(trailingBox, Pos.CENTER_RIGHT)
+  HeaderBar.setDragType(trailingBox, HeaderDragType.DRAGGABLE_SUBTREE)
 
-  val closeBtn = new Button("", FontIcon.of(Feather.X, 13))
-  closeBtn.getStyleClass.addAll("window-control-btn", "window-control-btn-close", "interactive-hand")
-  closeBtn.setTooltip(new Tooltip("Close"))
-  closeBtn.setOnAction(_ => onCloseRequested())
-
-  val windowControlsBox =
-    if (WindowResizeHelper.isMacOS) new HBox(2, toggleRespBtn, settingsIconBtn)
-    else new HBox(2, toggleRespBtn, settingsIconBtn, minimizeBtn, maximizeBtn, closeBtn)
-  windowControlsBox.setAlignment(Pos.CENTER_RIGHT)
-  windowControlsBox.setMinWidth(Region.USE_PREF_SIZE)
-
-  getChildren.addAll(
-    brandMenuButton,
-    workspaceMenuButton,
-    targetBar,
-    envCombo,
-    dragSpacer,
-    quickSearchBtn,
-    new Separator(javafx.geometry.Orientation.VERTICAL),
-    windowControlsBox
-  )
+  setLeading(leadingBox)
+  setTrailing(trailingBox)
 
   private def buildQuickMenu(): ContextMenu = {
     val menu = new ContextMenu()

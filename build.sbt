@@ -1,10 +1,10 @@
-ThisBuild / scalaVersion := "3.3.3"
+ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / version      := "1.0.0"
 ThisBuild / organization := "net.protoform"
 
-val javafxVersion   = "21.0.2"
-val atlantafxVersion = "2.0.1"
-val richtextfxVersion = "0.11.2"
+val javafxVersion   = "25.0.5"
+val atlantafxVersion = "2.1.0"
+val richtextfxVersion = "0.11.7"
 val grpcVersion     = "1.64.0"
 val protobufVersion = "3.25.3"
 val gsonVersion     = "2.10.1"
@@ -71,10 +71,14 @@ lazy val root = (project in file("."))
       "-feature",
       "-unchecked",
       "-no-indent",
-      "-Xmax-inlines", "128"
+      "-Xmax-inlines", "128",
+      "-Wconf:msg=(EXTENDED in object StageStyle|HeaderBar in package javafx\\.scene\\.layout) is deprecated:s"
     ),
 
     // Packaging: Standalone Fat JAR configuration
+    Compile / run / fork := true,
+    Compile / run / javaOptions ++= Seq("-Djavafx.enablePreview=true", "-Djavafx.suppressPreviewWarning=true"),
+    Compile / mainClass := Some("net.protoform.Launcher"),
     assembly / mainClass := Some("net.protoform.Launcher"),
     assembly / assemblyJarName := "protoform-1.0.0.jar",
     assembly / assemblyMergeStrategy := {

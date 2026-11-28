@@ -39,13 +39,13 @@ Rather than toggling theme classes only on `Scene.getRoot` (which misses JavaFX 
 2. Optional theme overlay (`/styles/theme-carbon.css`, `/styles/theme-light.css`, `/styles/theme-paper.css`)
 3. `/styles/custom.css` — All component rules
 
-All modals, alerts, confirmations (`showConfirm`), prompts, and floating pop-out windows are built through `CustomDialogStage` (`StageStyle.UNDECORATED` + custom `42px` header bar + `.app-root` border + `WindowResizeHelper`) so every window shares identical ProtoForm chrome and active theme tokens.
+All modals, alerts, confirmations (`showConfirm`), prompts, and floating pop-out windows are built through `CustomDialogStage` (`StageStyle.EXTENDED` + `HeaderBar` `42px` header bar) so every window shares ProtoForm chrome, native OS resizing/traffic-lights/caption buttons, and active theme tokens (`Scene.setFill` synced by `ThemeManager`).
 
 ---
 
 ## 3. Window Layout & Core Panes
 
-ProtoForm launches at `1480 × 920` (clamped to screen visual bounds, min `960 × 620`) with a frameless custom titlebar, dock/taskbar-aware maximize (`WindowStateController` using `Screen.getVisualBounds`), collapsible/rearrangeable split panes, and telemetry status bar:
+ProtoForm launches at `1480 × 920` (clamped to screen visual bounds, min `820 × 560`) with JavaFX 25 `StageStyle.EXTENDED` + `HeaderBar` unified chrome, OS-native maximize/tiling & bounds persistence (`WindowStateController`), collapsible/rearrangeable split panes, and telemetry status bar:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -87,10 +87,10 @@ ProtoForm launches at `1480 × 920` (clamped to screen visual bounds, min `960 �
 ## 5. Key UI Components
 
 ### 5.1 Custom Title Bar (`CustomTitleBar.scala`), `TargetBarControl.scala`, `WorkbenchTabBar.scala` & Resizing
-- `StageStyle.UNDECORATED` with a unified `46px` header bar: bordered vector Proto-Owl mark + `ProtoForm` quick menu (`Show Defaults`, `Show Advanced Toolbar Actions`, `Theme` submenu, `Layout & Modular Panes`), labeled `[Workspace: <name> ▾]` menu button (1-click switch, `+ New Workspace…`, and sidebar shortcut), embedded `TargetBarControl`, Environment Switcher (with `Manage Environments…`), `Jump`, `Response Pane` quick toggle, `Settings`, and min/max/close controls.
-- `TargetBarControl` (`30px` pill with uniform `28px` segments) unites the `TLS` / `Plain` lock toggle (`Feather.LOCK` / `Feather.UNLOCK`), editable recent-endpoints `ComboBox` (`Ctrl+L`), clickable Schema source chip (`Refl`, `.desc`/`.binpb`, `.proto`, `Kubernetes Port-Forward…`, Health Check), and icon-only `↻` Introspect button.
+- `StageStyle.EXTENDED` + `HeaderBar` (`46px` unified header bar with native macOS traffic lights / Windows & Linux caption buttons and `Scene.setFill` theme contrast): leading bordered vector Proto-Owl mark + `ProtoForm` quick menu (`Show Defaults`, `Show Advanced Toolbar Actions`, `Theme` submenu, `Layout & Modular Panes`), shrinkable `[Workspace: <name> ▾]` menu button (1-click switch, `+ New Workspace…`, and sidebar shortcut), embedded `TargetBarControl`, and Environment Switcher; trailing `Jump`, `Response Pane` quick toggle, and `Settings`.
+- `TargetBarControl` (`30px` pill with uniform `28px` segments) unites the `TLS` / `Plain` lock toggle (`Feather.LOCK` / `Feather.UNLOCK`), editable recent-endpoints `ComboBox` (`Ctrl+L`, shrinks down to `80px` on narrow windows), clickable Schema source chip (`Refl`, `.desc`/`.binpb`, `.proto`, `Kubernetes Port-Forward…`, Health Check), and icon-only `↻` Introspect button.
 - `WorkbenchTabBar` (`34px` strip above the Request/Response split) enables multi-tab sessions (`Ctrl+T`, `Ctrl+W`, `Ctrl+Tab`, `Ctrl+Click` / right-click `Open in New Tab`) with per-tab request/response/auth/stream isolation and background streaming indicators.
-- `WindowResizeHelper` provides 8-direction resizing (`8px` side/bottom edges, `5px` top edge clear of titlebar buttons, `14px` corners, plus a subtle bottom-right status-bar resize grip on Windows/Linux), macOS menu-bar `minY` clamping, maximized-edge detachment, and shared `4px`-threshold header dragging with double-click maximize anywhere outside interactive controls. On macOS, stages use native `StageStyle.DECORATED` framing (with native traffic lights, native 8-way Retina resize, and native double-click Zoom/tiling) while `CustomTitleBar` acts as a unified `46px` toolbar and scales cleanly down to `820 × 560` without clipping window controls. `WindowStateController` and `SplitPane` divider listeners debounce-save window bounds and pane ratios (`400ms`) on resize/move.
+- Native OS window resizing, double-click zoom/maximize, macOS Sequoia window tiling, and Windows Snap Layouts are handled natively by `StageStyle.EXTENDED` + `HeaderBar` (`HeaderDragType.DRAGGABLE_SUBTREE` on bar gaps, `HeaderDragType.NONE` on controls). `WindowStateController` and `SplitPane` divider listeners debounce-save window bounds (`820 × 560` minimum) and pane ratios (`400ms`) on resize/move.
 
 ### 5.2 Activity Rail (`ActivityRail.scala`) & Drawer (`NavigationPane.scala`)
 - **Slim `40px` Activity Rail**: Houses `Services` (with live green connection dot), `Templates` (with count badge), `History`, `Workspaces` (`Feather.BRIEFCASE`), and a bottom `Suite` runner shortcut. Defaults to collapsed for a 2-pane workspace; `Ctrl+B` or `Ctrl+1/2/3/4` toggles/switches the docked drawer.

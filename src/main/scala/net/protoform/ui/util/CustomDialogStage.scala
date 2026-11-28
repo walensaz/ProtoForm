@@ -30,9 +30,8 @@ object CustomDialogStage {
     headerExtraRight: Option[Node] = None,
     onCloseRequested: Option[Stage => Unit] = None
   ): Stage = {
-    val useNativeChrome = WindowResizeHelper.isMacOS
     val stage = new Stage()
-    stage.initStyle(if (useNativeChrome) StageStyle.DECORATED else StageStyle.UNDECORATED)
+    stage.initStyle(StageStyle.EXTENDED)
     stage.setResizable(resizable)
     ThemeManager.applyStageIcons(stage)
     if (modal) {
@@ -41,38 +40,31 @@ object CustomDialogStage {
     ThemeManager.getPrimaryWindow.foreach(stage.initOwner)
     stage.setTitle(title)
 
-    val topStack = new VBox()
-    var closeBtnOpt: Option[Button] = None
+    val icon = FontIcon.of(iconCode, 14)
+    icon.getStyleClass.add("brand-icon")
+    val iconBox = new StackPane(icon)
+    iconBox.getStyleClass.add("brand-mark")
 
-    if (!useNativeChrome || headerExtraRight.isDefined) {
-      val icon = FontIcon.of(iconCode, 14)
-      icon.getStyleClass.add("brand-icon")
-      val iconBox = new StackPane(icon)
-      iconBox.getStyleClass.add("brand-mark")
+    val titleLbl = new Label(title)
+    titleLbl.getStyleClass.add("brand-title")
 
-      val titleLbl = new Label(title)
-      titleLbl.getStyleClass.add("brand-title")
+    val leadingBox = new HBox(10, iconBox, titleLbl)
+    leadingBox.setAlignment(Pos.CENTER_LEFT)
+    HeaderBar.setAlignment(leadingBox, Pos.CENTER_LEFT)
+    HeaderBar.setDragType(leadingBox, HeaderDragType.DRAGGABLE_SUBTREE)
 
-      val spacer = new Region()
-      HBox.setHgrow(spacer, Priority.ALWAYS)
-
-      val headerBar = new HBox(10)
-      headerBar.setAlignment(Pos.CENTER_LEFT)
-      headerBar.setPadding(new Insets(6, 10, 6, 12))
-      headerBar.getStyleClass.add("custom-title-bar")
-      headerBar.getChildren.addAll(iconBox, titleLbl, spacer)
-      headerExtraRight.foreach(headerBar.getChildren.add)
-      if (!useNativeChrome) {
-        val closeBtn = new Button("", FontIcon.of(Feather.X, 13))
-        closeBtn.getStyleClass.addAll("window-control-btn", "window-control-btn-close", "interactive-hand")
-        closeBtn.setTooltip(new Tooltip("Close (Esc)"))
-        headerBar.getChildren.add(closeBtn)
-        closeBtnOpt = Some(closeBtn)
-        WindowResizeHelper.installHeaderDrag(headerBar, stage)
-      }
-      topStack.getChildren.add(headerBar)
+    val headerBar = new HeaderBar()
+    headerBar.setPadding(new Insets(6, 10, 6, 12))
+    headerBar.getStyleClass.addAll("custom-title-bar", "dialog-header-bar")
+    HeaderBar.setPrefButtonHeight(stage, 42.0)
+    headerBar.setLeading(leadingBox)
+    headerExtraRight.foreach { extra =>
+      HeaderBar.setDragType(extra, HeaderDragType.NONE)
+      HeaderBar.setAlignment(extra, Pos.CENTER_RIGHT)
+      headerBar.setTrailing(extra)
     }
 
+    val topStack = new VBox(headerBar)
     subtitle.filter(_.trim.nonEmpty).foreach { sub =>
       val subLbl = new Label(sub)
       subLbl.getStyleClass.add("form-subtext")
@@ -109,7 +101,6 @@ object CustomDialogStage {
       }
     }
 
-    closeBtnOpt.foreach(_.setOnAction(_ => closeAction()))
     stage.setOnCloseRequest { ev =>
       ev.consume()
       closeAction()
@@ -127,9 +118,6 @@ object CustomDialogStage {
     stage.setScene(scene)
     stage.setMinWidth(Math.min(minWidth, safeW))
     stage.setMinHeight(Math.min(minHeight, safeH))
-    if (resizable && !useNativeChrome) {
-      WindowResizeHelper.install(stage)
-    }
 
     // Center over owner window when shown
     ThemeManager.getPrimaryWindow.foreach { owner =>

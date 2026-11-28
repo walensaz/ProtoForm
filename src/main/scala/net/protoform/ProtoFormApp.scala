@@ -18,7 +18,7 @@ import net.protoform.infrastructure.schema.{DescriptorRegistry, DescriptorSetSch
 import net.protoform.infrastructure.storage.LocalJsonWorkspaceRepository
 import net.protoform.ui.state.{AppState, ConnectionStatus, WorkbenchTabSession}
 import net.protoform.ui.theme.ThemeManager
-import net.protoform.ui.util.{CustomDialogStage, DockingManager, TabDragSupport, WindowResizeHelper, WindowStateController}
+import net.protoform.ui.util.{CustomDialogStage, DockingManager, TabDragSupport, WindowStateController}
 import net.protoform.ui.views._
 
 import java.awt.Desktop
@@ -75,8 +75,7 @@ class ProtoFormApp extends Application {
   layoutPersistDebounce.setOnFinished(_ => persistLayoutSettings())
 
   override def start(primaryStage: Stage): Unit = {
-    val useNativeChrome = WindowResizeHelper.isMacOS
-    primaryStage.initStyle(if (useNativeChrome) StageStyle.DECORATED else StageStyle.UNDECORATED)
+    primaryStage.initStyle(StageStyle.EXTENDED)
     ThemeManager.loadFonts()
 
     workspaceService.initialize()
@@ -226,7 +225,7 @@ class ProtoFormApp extends Application {
       onBoundsChanged = bounds => persistWindowBounds(bounds)
     )
 
-    val titleBar = new CustomTitleBar(primaryStage, windowController, appState, workspaceService, targetBar, titleBarActions, () => handleAppClose(primaryStage))
+    val titleBar = new CustomTitleBar(primaryStage, appState, workspaceService, targetBar, titleBarActions)
 
     val mainShell = new HBox(activityRail, mainSplitPane)
     HBox.setHgrow(mainSplitPane, Priority.ALWAYS)
@@ -242,14 +241,6 @@ class ProtoFormApp extends Application {
     val scene = new Scene(root, width, height)
     ThemeManager.registerScene(scene, primaryStage)
     installKeyboardShortcuts(scene)
-
-    if (!WindowResizeHelper.isMacOS) {
-      WindowResizeHelper.install(
-        primaryStage,
-        isMaximizedCheck = () => windowController.isMaximized,
-        onBeginResizeFromMaximized = () => windowController.detachMaximizedForResize()
-      )
-    }
 
     primaryStage.setTitle("ProtoForm — Dynamic gRPC Client")
     ThemeManager.applyStageIcons(primaryStage)
@@ -983,31 +974,15 @@ class ProtoFormApp extends Application {
     val shortcutHint = new Label("Ctrl+Enter Send  ·  Ctrl+K Jump  ·  Ctrl+B Sidebar  ·  Ctrl+L Target  ·  Ctrl+, Settings")
     shortcutHint.getStyleClass.add("info-strip")
 
-    val gripLines = new javafx.scene.shape.SVGPath()
-    gripLines.setContent("M 11 3 L 3 11 M 11 7 L 7 11")
-    gripLines.getStyleClass.add("window-resize-grip-icon")
-
-    val resizeGrip = new StackPane(gripLines)
-    resizeGrip.getStyleClass.add("window-resize-grip")
-    resizeGrip.setMinSize(14, 14)
-    resizeGrip.setPrefSize(14, 14)
-    resizeGrip.setMaxSize(14, 14)
-    resizeGrip.setMouseTransparent(true)
-    if (WindowResizeHelper.isMacOS) {
-      resizeGrip.setVisible(false)
-      resizeGrip.setManaged(false)
-    } else {
-      resizeGrip.visibleProperty().bind(windowController.isMaximizedProperty.not())
-      resizeGrip.managedProperty().bind(windowController.isMaximizedProperty.not())
-    }
-
-    bar.getChildren.addAll(connectionBox, new Separator(Orientation.VERTICAL), spinner, statusLabel, spacer, shortcutHint, resizeGrip)
+    bar.getChildren.addAll(connectionBox, new Separator(Orientation.VERTICAL), spinner, statusLabel, spacer, shortcutHint)
     bar
   }
 }
 
 object ProtoFormApp {
   def main(args: Array[String]): Unit = {
+    System.setProperty("javafx.enablePreview", "true")
+    System.setProperty("javafx.suppressPreviewWarning", "true")
     Application.launch(classOf[ProtoFormApp], args: _*)
   }
 }

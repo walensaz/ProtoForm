@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 pushd "%~dp0.."
 
-set "JAR_PATH=%~dp0target\scala-3.3.3\protoform-demo-server-1.0.0.jar"
+set "JAR_PATH=%~dp0target\scala-3.3.7\protoform-demo-server-1.0.0.jar"
 set "DO_BUILD=1"
 set "APP_ARGS="
 

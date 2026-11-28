@@ -5,6 +5,7 @@ import javafx.application.Application
 import javafx.scene.Scene
 import javafx.scene.control.Dialog
 import javafx.scene.image.Image
+import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.stage.{Stage, Window}
 
@@ -99,6 +100,7 @@ object ThemeManager {
     primaryScene = Some(scene)
     primaryWindow = Some(owner)
     syncStylesheets(scene.getStylesheets, activeThemeName)
+    syncSceneFill(scene, activeThemeName)
   }
 
   def registerSecondaryScene(scene: Scene): Unit = {
@@ -106,6 +108,7 @@ object ThemeManager {
       secondaryScenes += scene
     }
     syncStylesheets(scene.getStylesheets, activeThemeName)
+    syncSceneFill(scene, activeThemeName)
   }
 
   def unregisterSecondaryScene(scene: Scene): Unit = {
@@ -129,8 +132,25 @@ object ThemeManager {
     }
 
     Application.setUserAgentStylesheet(baseTheme.getUserAgentStylesheet)
-    primaryScene.foreach(s => syncStylesheets(s.getStylesheets, normalized))
-    secondaryScenes.foreach(s => syncStylesheets(s.getStylesheets, normalized))
+    primaryScene.foreach { s =>
+      syncStylesheets(s.getStylesheets, normalized)
+      syncSceneFill(s, normalized)
+    }
+    secondaryScenes.foreach { s =>
+      syncStylesheets(s.getStylesheets, normalized)
+      syncSceneFill(s, normalized)
+    }
+  }
+
+  private def syncSceneFill(scene: Scene, themeName: String): Unit = {
+    val fill = themeName match {
+      case "ProtoForm Carbon"                       => Color.web("#171b22")
+      case "Nord Dark"                              => Color.web("#2e3440")
+      case "Cupertino Dark"                         => Color.web("#1c1c1e")
+      case "ProtoForm Paper" | "Primer Light" | "Cupertino Light" => Color.web("#f6f7f9")
+      case _                                        => Color.web("#0d1117")
+    }
+    scene.setFill(fill)
   }
 
   def styleDialog(dialog: Dialog[_]): Unit = {

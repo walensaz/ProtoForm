@@ -95,7 +95,7 @@ curl.exe -fsSL https://raw.githubusercontent.com/walensaz/ProtoForm/master/packa
 
 ### Manual Downloads & Universal Fat JAR
 
-Pre-built native installers (`.msi`, `.dmg`, `.deb`), portable archives, and the universal fat JAR are available on the [GitHub Releases](https://github.com/walensaz/ProtoForm/releases) page. If you already have Java 21 LTS installed:
+Pre-built native installers (`.msi`, `.dmg`, `.deb`), portable archives, and the universal fat JAR are available on the [GitHub Releases](https://github.com/walensaz/ProtoForm/releases) page. If you already have Java 25 LTS installed:
 
 ```bash
 java -jar protoform-1.0.0.jar
@@ -106,17 +106,17 @@ java -jar protoform-1.0.0.jar
 ## Building & Packaging from Source
 
 ### Prerequisites
-- **JDK 21 LTS** (with `jpackage` for native installers)
-- **sbt** 1.9+
+- **JDK 25 LTS** (with `jpackage` for native installers)
+- **sbt** 1.10+
 - **Python 3** (optional, only to regenerate icon assets via `packaging/generate_icons.py`)
-- **WiX Toolset** (optional on Windows, only for `.msi`/`.exe` installers; `app-image` portable zips work with JDK 21 alone)
+- **WiX Toolset** (optional on Windows, only for `.msi`/`.exe` installers; `app-image` portable zips work with JDK 25 alone)
 
 ### Run Tests, Build Fat JAR & Demo Server
 
 ```bash
 sbt test                                          # Run ScalaTest suite
-sbt assembly                                      # Build target/scala-3.3.3/protoform-1.0.0.jar
-java -jar target/scala-3.3.3/protoform-1.0.0.jar    # Launch ProtoForm
+sbt assembly                                      # Build target/scala-3.3.7/protoform-1.0.0.jar
+java -jar target/scala-3.3.7/protoform-1.0.0.jar    # Launch ProtoForm
 sbt "demoServer/run"                              # Start local gRPC sandbox server on 127.0.0.1:50051
 ```
 

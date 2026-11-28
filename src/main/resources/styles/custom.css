@@ -14,8 +14,6 @@
 
 .app-root {
     -fx-background-color: -pf-bg-canvas;
-    -fx-border-color: -pf-border-subtle;
-    -fx-border-width: 1px;
 }
 
 .mono-text {
@@ -56,7 +54,11 @@
     -fx-border-width: 0 0 1px 0;
     -fx-min-height: 46px;
     -fx-pref-height: 46px;
-    -fx-alignment: CENTER_LEFT;
+}
+
+.dialog-header-bar {
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
 }
 
 .brand-mark {
@@ -233,20 +235,7 @@
     -fx-background-color: -pf-bg-pane;
     -fx-border-color: -pf-border-subtle;
     -fx-border-width: 1px 0 0 0;
-    -fx-padding: 6px 6px 6px 14px;
-}
-
-.window-resize-grip {
-    -fx-alignment: BOTTOM_RIGHT;
-    -fx-padding: 0 2px 0 0;
-}
-
-.window-resize-grip-icon {
-    -fx-fill: transparent;
-    -fx-stroke: -pf-fg-muted;
-    -fx-stroke-width: 1.25px;
-    -fx-stroke-line-cap: round;
-    -fx-opacity: 0.6;
+    -fx-padding: 6px 14px;
 }
 
 .status-text-idle {

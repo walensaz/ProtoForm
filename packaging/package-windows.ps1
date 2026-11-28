@@ -22,10 +22,10 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "sbt build failed with exit code $LASTEXITCODE" }
     }
 
-    $JarPath = Join-Path $RepoRoot "target\scala-3.3.3\protoform-$Version.jar"
+    $JarPath = Join-Path $RepoRoot "target\scala-3.3.7\protoform-$Version.jar"
     if (-not (Test-Path $JarPath)) {
-        $FallbackJar = Get-ChildItem (Join-Path $RepoRoot "target\scala-3.3.3") -Filter "protoform-*.jar" | Select-Object -First 1
-        if ($null -eq $FallbackJar) { throw "Could not locate assembled ProtoForm JAR in target\scala-3.3.3" }
+        $FallbackJar = Get-ChildItem (Join-Path $RepoRoot "target\scala-3.3.7") -Filter "protoform-*.jar" | Select-Object -First 1
+        if ($null -eq $FallbackJar) { throw "Could not locate assembled ProtoForm JAR in target\scala-3.3.7" }
         $JarPath = $FallbackJar.FullName
     }
 
@@ -74,7 +74,9 @@ try {
         "--add-modules", $ReducedModules,
         "--jlink-options", $JlinkOpts,
         "--java-options", "-Xmx1024m",
-        "--java-options", "-Dfile.encoding=UTF-8"
+        "--java-options", "-Dfile.encoding=UTF-8",
+        "--java-options", "-Djavafx.enablePreview=true",
+        "--java-options", "-Djavafx.suppressPreviewWarning=true"
     )
 
     if ($InstallerType -eq "app-image" -or $InstallerType -eq "all") {
