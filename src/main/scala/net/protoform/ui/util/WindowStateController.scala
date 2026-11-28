@@ -16,21 +16,29 @@ final case class WindowBounds(
   isMaximized: Boolean
 )
 
+object WindowStateController {
+  val MinWindowWidth: Double = 820.0
+  val MinWindowHeight: Double = 560.0
+}
+
 class WindowStateController(
   stage: Stage,
   initialWidth: Double,
   initialHeight: Double,
   initialX: Option[Double],
   initialY: Option[Double],
+  useNativeChrome: Boolean = WindowResizeHelper.isMacOS,
   onBoundsChanged: WindowBounds => Unit = _ => ()
 ) {
+  import WindowStateController._
+
   private val maximizedProp: BooleanProperty = new SimpleBooleanProperty(false)
   private var applyingBounds: Boolean = false
   private val persistDebounce = new PauseTransition(Duration.millis(400))
   persistDebounce.setOnFinished(_ => onBoundsChanged(currentSnapshot))
 
-  private var restoreWidth: Double = Math.max(1000.0, initialWidth)
-  private var restoreHeight: Double = Math.max(640.0, initialHeight)
+  private var restoreWidth: Double = Math.max(MinWindowWidth, initialWidth)
+  private var restoreHeight: Double = Math.max(MinWindowHeight, initialHeight)
   private var restoreX: Option[Double] = initialX
   private var restoreY: Option[Double] = initialY
 
@@ -73,12 +81,21 @@ class WindowStateController(
       }
     }
 
-    // Intercept native OS maximize (e.g. Win+Up) on undecorated stage so it respects taskbar/dock visualBounds.
-    stage.maximizedProperty().addListener { (_, _, nativeMax) =>
-      if (nativeMax) {
-        javafx.application.Platform.runLater { () =>
-          stage.setMaximized(false)
-          setMaximized(true)
+    if (useNativeChrome) {
+      stage.maximizedProperty().addListener { (_, _, nativeMax) =>
+        if (!applyingBounds) {
+          maximizedProp.set(nativeMax)
+          persistDebounce.playFromStart()
+        }
+      }
+    } else {
+      // Intercept native OS maximize (e.g. Win+Up) on undecorated stage so it respects taskbar/dock visualBounds.
+      stage.maximizedProperty().addListener { (_, _, nativeMax) =>
+        if (nativeMax) {
+          javafx.application.Platform.runLater { () =>
+            stage.setMaximized(false)
+            setMaximized(true)
+          }
         }
       }
     }
@@ -93,7 +110,11 @@ class WindowStateController(
 
     applyingBounds = true
     try {
-      if (maximize) {
+      if (useNativeChrome) {
+        if (maximize) captureCurrentRestoreBounds()
+        maximizedProp.set(maximize)
+        stage.setMaximized(maximize)
+      } else if (maximize) {
         captureCurrentRestoreBounds()
         val vb = resolveActiveScreenVisualBounds()
         maximizedProp.set(true)
@@ -161,8 +182,8 @@ class WindowStateController(
     WindowBounds(
       x = restoreX,
       y = restoreY,
-      width = Math.max(1000.0, restoreWidth),
-      height = Math.max(640.0, restoreHeight),
+      width = Math.max(MinWindowWidth, restoreWidth),
+      height = Math.max(MinWindowHeight, restoreHeight),
       isMaximized = isMaximized
     )
   }
@@ -174,8 +195,8 @@ class WindowStateController(
     val h = stage.getHeight
     if (!x.isNaN) restoreX = Some(x)
     if (!y.isNaN) restoreY = Some(y)
-    if (!w.isNaN && w >= 1000.0) restoreWidth = w
-    if (!h.isNaN && h >= 640.0) restoreHeight = h
+    if (!w.isNaN && w >= MinWindowWidth) restoreWidth = w
+    if (!h.isNaN && h >= MinWindowHeight) restoreHeight = h
   }
 
   private def applyInitialBounds(): Unit = {
@@ -188,12 +209,25 @@ class WindowStateController(
       restoreHeight = ch
       stage.setWidth(cw)
       stage.setHeight(ch)
-      cx.foreach(stage.setX)
-      cy.foreach(stage.setY)
+      if (!useNativeChrome) {
+        cx.foreach(stage.setX)
+        cy.foreach(stage.setY)
+      }
     } finally {
       applyingBounds = false
     }
     persistDebounce.playFromStart()
+  }
+
+  def applySavedPositionAfterShow(): Unit = {
+    if (!useNativeChrome) return
+    applyingBounds = true
+    try {
+      restoreX.foreach(stage.setX)
+      restoreY.foreach(stage.setY)
+    } finally {
+      applyingBounds = false
+    }
   }
 
   private def resolveActiveScreenVisualBounds(): Rectangle2D = {
@@ -220,14 +254,14 @@ class WindowStateController(
       case (Some(x), Some(y)) if !x.isNaN && !y.isNaN =>
         val matchingScreen = allScreens.find(_.getVisualBounds.intersects(x, y, Math.max(200.0, w), Math.max(200.0, h)))
         val vb = matchingScreen.map(_.getVisualBounds).getOrElse(primaryVb)
-        val clampedW = Math.min(Math.max(1000.0, w), vb.getWidth)
-        val clampedH = Math.min(Math.max(640.0, h), vb.getHeight)
+        val clampedW = Math.min(Math.max(MinWindowWidth, w), vb.getWidth)
+        val clampedH = Math.min(Math.max(MinWindowHeight, h), vb.getHeight)
         val clampedX = Math.max(vb.getMinX, Math.min(x, vb.getMaxX - Math.min(clampedW, 200.0)))
         val clampedY = Math.max(vb.getMinY, Math.min(y, vb.getMaxY - Math.min(clampedH, 120.0)))
         (Some(clampedX), Some(clampedY), clampedW, clampedH)
       case _ =>
-        val clampedW = Math.min(Math.max(1000.0, w), primaryVb.getWidth)
-        val clampedH = Math.min(Math.max(640.0, h), primaryVb.getHeight)
+        val clampedW = Math.min(Math.max(MinWindowWidth, w), primaryVb.getWidth)
+        val clampedH = Math.min(Math.max(MinWindowHeight, h), primaryVb.getHeight)
         (None, None, clampedW, clampedH)
     }
   }

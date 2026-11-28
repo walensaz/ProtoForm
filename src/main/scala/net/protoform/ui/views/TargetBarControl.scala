@@ -28,6 +28,7 @@ class TargetBarControl(
   kubePortForwardPort: Option[KubePortForwardPort] = None
 ) extends HBox(0) {
   setAlignment(Pos.CENTER_LEFT)
+  setMinWidth(0)
   getStyleClass.add("target-pill-box")
 
   private val tlsIcon = FontIcon.of(Feather.UNLOCK, 12)
@@ -49,9 +50,10 @@ class TargetBarControl(
   val recent = workspaceService.getData.recentEndpoints
   endpointCombo.getItems.addAll(recent.asJava)
   endpointCombo.setValue(initialProject.lastEndpoint.getOrElse(workspaceService.getSettings.lastEndpoint))
-  endpointCombo.setMinWidth(155)
-  endpointCombo.setPrefWidth(215)
+  endpointCombo.setMinWidth(80)
+  endpointCombo.setPrefWidth(200)
   endpointCombo.setMaxWidth(260)
+  HBox.setHgrow(endpointCombo, Priority.SOMETIMES)
   endpointCombo.getEditor.setOnAction(_ => triggerIntrospection())
 
   private val reflMenuItem = new MenuItem("Introspect via Reflection", FontIcon.of(Feather.SEARCH, 13))

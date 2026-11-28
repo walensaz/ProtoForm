@@ -39,7 +39,7 @@ class NavigationPane(
 ) extends VBox(8) {
   private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault())
   setPadding(new Insets(10))
-  setMinWidth(250)
+  setMinWidth(190)
 
   private var currentSection: String = "services"
   private var syncingSelection: Boolean = false

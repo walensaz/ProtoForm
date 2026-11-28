@@ -22,6 +22,9 @@ final case class StageBounds(
  */
 object WindowResizeHelper {
 
+  val isMacOS: Boolean = System.getProperty("os.name", "").toLowerCase.contains("mac")
+  val isWindows: Boolean = System.getProperty("os.name", "").toLowerCase.contains("win")
+
   val EdgeMargin: Double = 8.0
   val TopEdgeMargin: Double = 5.0
   val CornerMargin: Double = 14.0

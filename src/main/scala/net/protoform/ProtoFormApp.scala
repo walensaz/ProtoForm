@@ -75,7 +75,8 @@ class ProtoFormApp extends Application {
   layoutPersistDebounce.setOnFinished(_ => persistLayoutSettings())
 
   override def start(primaryStage: Stage): Unit = {
-    primaryStage.initStyle(StageStyle.UNDECORATED)
+    val useNativeChrome = WindowResizeHelper.isMacOS
+    primaryStage.initStyle(if (useNativeChrome) StageStyle.DECORATED else StageStyle.UNDECORATED)
     ThemeManager.loadFonts()
 
     workspaceService.initialize()
@@ -236,24 +237,26 @@ class ProtoFormApp extends Application {
     root.setCenter(mainShell)
     root.setBottom(createStatusBar())
 
-    val width = Math.max(1000.0, savedSettings.windowWidth)
-    val height = Math.max(640.0, savedSettings.windowHeight)
+    val width = Math.max(WindowStateController.MinWindowWidth, savedSettings.windowWidth)
+    val height = Math.max(WindowStateController.MinWindowHeight, savedSettings.windowHeight)
     val scene = new Scene(root, width, height)
     ThemeManager.registerScene(scene, primaryStage)
     installKeyboardShortcuts(scene)
 
-    WindowResizeHelper.install(
-      primaryStage,
-      isMaximizedCheck = () => windowController.isMaximized,
-      onBeginResizeFromMaximized = () => windowController.detachMaximizedForResize()
-    )
+    if (!WindowResizeHelper.isMacOS) {
+      WindowResizeHelper.install(
+        primaryStage,
+        isMaximizedCheck = () => windowController.isMaximized,
+        onBeginResizeFromMaximized = () => windowController.detachMaximizedForResize()
+      )
+    }
 
     primaryStage.setTitle("ProtoForm — Dynamic gRPC Client")
     ThemeManager.applyStageIcons(primaryStage)
     primaryStage.setScene(scene)
     val primaryVb = javafx.stage.Screen.getPrimary.getVisualBounds
-    primaryStage.setMinWidth(Math.min(1000.0, primaryVb.getWidth))
-    primaryStage.setMinHeight(Math.min(640.0, primaryVb.getHeight))
+    primaryStage.setMinWidth(Math.min(WindowStateController.MinWindowWidth, primaryVb.getWidth))
+    primaryStage.setMinHeight(Math.min(WindowStateController.MinWindowHeight, primaryVb.getHeight))
     windowController.install()
 
     primaryStage.setOnCloseRequest { _ =>
@@ -261,6 +264,7 @@ class ProtoFormApp extends Application {
     }
 
     primaryStage.show()
+    windowController.applySavedPositionAfterShow()
     if (savedSettings.isMaximized) {
       Platform.runLater(() => windowController.setMaximized(true))
     }
@@ -989,8 +993,13 @@ class ProtoFormApp extends Application {
     resizeGrip.setPrefSize(14, 14)
     resizeGrip.setMaxSize(14, 14)
     resizeGrip.setMouseTransparent(true)
-    resizeGrip.visibleProperty().bind(windowController.isMaximizedProperty.not())
-    resizeGrip.managedProperty().bind(windowController.isMaximizedProperty.not())
+    if (WindowResizeHelper.isMacOS) {
+      resizeGrip.setVisible(false)
+      resizeGrip.setManaged(false)
+    } else {
+      resizeGrip.visibleProperty().bind(windowController.isMaximizedProperty.not())
+      resizeGrip.managedProperty().bind(windowController.isMaximizedProperty.not())
+    }
 
     bar.getChildren.addAll(connectionBox, new Separator(Orientation.VERTICAL), spinner, statusLabel, spacer, shortcutHint, resizeGrip)
     bar

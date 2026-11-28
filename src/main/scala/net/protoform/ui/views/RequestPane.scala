@@ -42,7 +42,7 @@ class RequestPane(
   dynamicAuthPort: Option[DynamicAuthTokenPort] = None
 ) extends VBox(8) {
   setPadding(new Insets(10))
-  setMinWidth(340)
+  setMinWidth(220)
 
   private var syncingSelectors: Boolean = false
 

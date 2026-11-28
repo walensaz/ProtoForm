@@ -25,7 +25,7 @@ class ResponsePane(
 ) extends VBox(8) {
   private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault())
   setPadding(new Insets(10))
-  setMinWidth(300)
+  setMinWidth(220)
 
   private var popOutVisible: Boolean = true
 

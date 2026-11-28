@@ -45,6 +45,7 @@ class CustomTitleBar(
 
   setAlignment(Pos.CENTER_LEFT)
   setPadding(new Insets(6, 10, 6, 10))
+  setMinWidth(0)
   getStyleClass.add("custom-title-bar")
 
   // --- Left Section: Brand Quick Menu + Unified Target Pill + Environment ---
@@ -117,6 +118,7 @@ class CustomTitleBar(
   wsPrefixLbl.getStyleClass.add("workspace-pill-prefix")
   private val wsNameLbl = new Label("Default")
   wsNameLbl.getStyleClass.add("workspace-pill-name")
+  wsNameLbl.setMinWidth(20)
   wsNameLbl.setMaxWidth(135)
   private val wsChevron = FontIcon.of(Feather.CHEVRON_DOWN, 11)
   wsChevron.getStyleClass.add("brand-chevron")
@@ -129,7 +131,7 @@ class CustomTitleBar(
   workspaceMenuButton.setGraphic(wsContent)
   workspaceMenuButton.setFocusTraversable(false)
   workspaceMenuButton.getStyleClass.addAll("workspace-pill-btn", "interactive-hand")
-  workspaceMenuButton.setMinWidth(Region.USE_PREF_SIZE)
+  workspaceMenuButton.setMinWidth(76)
   workspaceMenuButton.setTooltip(new Tooltip("Active Workspace (switch, create, or manage templates/environments per workspace)"))
 
   private val workspaceMenu = new ContextMenu()
@@ -182,6 +184,9 @@ class CustomTitleBar(
 
   val envCombo = new ComboBox[String]()
   envCombo.getStyleClass.addAll("small", "interactive-hand")
+  envCombo.setMinWidth(75)
+  envCombo.setPrefWidth(120)
+  envCombo.setMaxWidth(165)
   envCombo.setTooltip(new Tooltip("Switch active environment (endpoint, TLS, auth profile & {{var}} variables)"))
 
   private def refreshEnvironmentCombo(): Unit = {
@@ -221,18 +226,21 @@ class CustomTitleBar(
 
   // --- Center Draggable Region ---
   val dragSpacer = new Region()
+  dragSpacer.setMinWidth(0)
   HBox.setHgrow(dragSpacer, Priority.ALWAYS)
 
-  WindowResizeHelper.installHeaderDrag(
-    header = this,
-    stage = stage,
-    isMaximized = () => windowController.isMaximized || stage.isMaximized,
-    onRestoreForDrag = (sx, sy) => {
-      if (stage.isMaximized) stage.setMaximized(false)
-      windowController.restoreForDrag(sx, sy)
-    },
-    onDoubleClick = Some(() => windowController.toggleMaximize())
-  )
+  if (!WindowResizeHelper.isMacOS) {
+    WindowResizeHelper.installHeaderDrag(
+      header = this,
+      stage = stage,
+      isMaximized = () => windowController.isMaximized || stage.isMaximized,
+      onRestoreForDrag = (sx, sy) => {
+        if (stage.isMaximized) stage.setMaximized(false)
+        windowController.restoreForDrag(sx, sy)
+      },
+      onDoubleClick = Some(() => windowController.toggleMaximize())
+    )
+  }
 
   // --- Right Section: Quick Switcher, Response Toggle & Window Controls ---
   val quickSearchBtn = new Button("Jump", FontIcon.of(Feather.COMMAND, 12))
@@ -285,8 +293,11 @@ class CustomTitleBar(
   closeBtn.setTooltip(new Tooltip("Close"))
   closeBtn.setOnAction(_ => onCloseRequested())
 
-  val windowControlsBox = new HBox(2, toggleRespBtn, settingsIconBtn, minimizeBtn, maximizeBtn, closeBtn)
+  val windowControlsBox =
+    if (WindowResizeHelper.isMacOS) new HBox(2, toggleRespBtn, settingsIconBtn)
+    else new HBox(2, toggleRespBtn, settingsIconBtn, minimizeBtn, maximizeBtn, closeBtn)
   windowControlsBox.setAlignment(Pos.CENTER_RIGHT)
+  windowControlsBox.setMinWidth(Region.USE_PREF_SIZE)
 
   getChildren.addAll(
     brandMenuButton,

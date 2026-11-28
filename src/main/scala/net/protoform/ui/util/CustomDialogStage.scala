@@ -30,8 +30,10 @@ object CustomDialogStage {
     headerExtraRight: Option[Node] = None,
     onCloseRequested: Option[Stage => Unit] = None
   ): Stage = {
+    val useNativeChrome = WindowResizeHelper.isMacOS
     val stage = new Stage()
-    stage.initStyle(StageStyle.UNDECORATED)
+    stage.initStyle(if (useNativeChrome) StageStyle.DECORATED else StageStyle.UNDECORATED)
+    stage.setResizable(resizable)
     ThemeManager.applyStageIcons(stage)
     if (modal) {
       stage.initModality(Modality.WINDOW_MODAL)
@@ -39,32 +41,38 @@ object CustomDialogStage {
     ThemeManager.getPrimaryWindow.foreach(stage.initOwner)
     stage.setTitle(title)
 
-    val icon = FontIcon.of(iconCode, 14)
-    icon.getStyleClass.add("brand-icon")
-    val iconBox = new StackPane(icon)
-    iconBox.getStyleClass.add("brand-mark")
+    val topStack = new VBox()
+    var closeBtnOpt: Option[Button] = None
 
-    val titleLbl = new Label(title)
-    titleLbl.getStyleClass.add("brand-title")
+    if (!useNativeChrome || headerExtraRight.isDefined) {
+      val icon = FontIcon.of(iconCode, 14)
+      icon.getStyleClass.add("brand-icon")
+      val iconBox = new StackPane(icon)
+      iconBox.getStyleClass.add("brand-mark")
 
-    val spacer = new Region()
-    HBox.setHgrow(spacer, Priority.ALWAYS)
+      val titleLbl = new Label(title)
+      titleLbl.getStyleClass.add("brand-title")
 
-    val closeBtn = new Button("", FontIcon.of(Feather.X, 13))
-    closeBtn.getStyleClass.addAll("window-control-btn", "window-control-btn-close", "interactive-hand")
-    closeBtn.setTooltip(new Tooltip("Close (Esc)"))
+      val spacer = new Region()
+      HBox.setHgrow(spacer, Priority.ALWAYS)
 
-    val headerBar = new HBox(10)
-    headerBar.setAlignment(Pos.CENTER_LEFT)
-    headerBar.setPadding(new Insets(6, 10, 6, 12))
-    headerBar.getStyleClass.add("custom-title-bar")
-    headerBar.getChildren.addAll(iconBox, titleLbl, spacer)
-    headerExtraRight.foreach(headerBar.getChildren.add)
-    headerBar.getChildren.add(closeBtn)
+      val headerBar = new HBox(10)
+      headerBar.setAlignment(Pos.CENTER_LEFT)
+      headerBar.setPadding(new Insets(6, 10, 6, 12))
+      headerBar.getStyleClass.add("custom-title-bar")
+      headerBar.getChildren.addAll(iconBox, titleLbl, spacer)
+      headerExtraRight.foreach(headerBar.getChildren.add)
+      if (!useNativeChrome) {
+        val closeBtn = new Button("", FontIcon.of(Feather.X, 13))
+        closeBtn.getStyleClass.addAll("window-control-btn", "window-control-btn-close", "interactive-hand")
+        closeBtn.setTooltip(new Tooltip("Close (Esc)"))
+        headerBar.getChildren.add(closeBtn)
+        closeBtnOpt = Some(closeBtn)
+        WindowResizeHelper.installHeaderDrag(headerBar, stage)
+      }
+      topStack.getChildren.add(headerBar)
+    }
 
-    WindowResizeHelper.installHeaderDrag(headerBar, stage)
-
-    val topStack = new VBox(headerBar)
     subtitle.filter(_.trim.nonEmpty).foreach { sub =>
       val subLbl = new Label(sub)
       subLbl.getStyleClass.add("form-subtext")
@@ -101,7 +109,11 @@ object CustomDialogStage {
       }
     }
 
-    closeBtn.setOnAction(_ => closeAction())
+    closeBtnOpt.foreach(_.setOnAction(_ => closeAction()))
+    stage.setOnCloseRequest { ev =>
+      ev.consume()
+      closeAction()
+    }
     if (modal) {
       scene.addEventFilter(KeyEvent.KEY_PRESSED, ev => {
         if (ev.getCode == KeyCode.ESCAPE) {
@@ -115,7 +127,7 @@ object CustomDialogStage {
     stage.setScene(scene)
     stage.setMinWidth(Math.min(minWidth, safeW))
     stage.setMinHeight(Math.min(minHeight, safeH))
-    if (resizable) {
+    if (resizable && !useNativeChrome) {
       WindowResizeHelper.install(stage)
     }
 
